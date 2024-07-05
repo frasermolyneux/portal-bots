@@ -1,0 +1,22 @@
+trigger: none
+pr: none
+
+stages:
+- stage: 'Deploy'
+
+  jobs:
+  - deployment: 'DeployToVirtualMachine'
+    environment:
+      name: dedicated-server
+      resourceType: VirtualMachine
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+            - task: PowerShell@2
+              inputs:
+                targetType: 'inline'
+                script: |
+                  Write-Host "Running on $($env:COMPUTERNAME)"
