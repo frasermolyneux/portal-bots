@@ -1,5 +1,12 @@
-trigger: none
+trigger:
+  branches:
+    include:
+      - "main"
+
 pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
 
 stages:
 - stage: 'Deploy'
@@ -7,7 +14,7 @@ stages:
   jobs:
   - deployment: 'DeployToVirtualMachine'
     environment:
-      name: dedicated-server
+      name: portal-bots-dedi-prd
       resourceType: VirtualMachine
 
     strategy:
