@@ -8,22 +8,17 @@ pr: none
 pool:
   vmImage: 'ubuntu-latest'
 
+resources:
+  repositories:
+    - repository: ado-pipeline-templates
+      type: github
+      name: frasermolyneux/ado-pipeline-templates
+      endpoint: github.com_frasermolyneux
+
 stages:
-- stage: 'Deploy'
-
-  jobs:
-  - deployment: 'DeployToVirtualMachine'
-    environment:
-      name: portal-bots-dedi-prd
-      resourceType: VirtualMachine
-
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-
-            - task: PowerShell@2
-              inputs:
-                targetType: 'inline'
-                script: |
-                  Write-Host "Running on $($env:COMPUTERNAME)"
+- template: templates/deploy-environment.yml
+  parameters:
+    azureSubscription: spn-portal-bots-production
+    azureEnvironment: portal-bots-Production
+    vmEnvironment: portal-bots-dedi-prd
+    environmentName: "prd"

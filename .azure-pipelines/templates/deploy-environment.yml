@@ -1,0 +1,41 @@
+parameters:
+  - name: azureSubscription
+    type: string
+  - name: azureEnvironment
+    type: string
+  - name: vmEnvironment
+    type: string
+  - name: environmentName
+    type: string
+
+stages:
+  - stage: deploy_${{ parameters.environmentName }}
+    jobs:
+      - deployment: deploy_${{ parameters.environmentName }}
+        environment: ${{ parameters.azureEnvironment }}
+
+        workspace:
+          clean: all
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+      - deployment: 'DeployToVirtualMachine'
+        environment:
+          name: ${{ parameters.vmEnvironment }}
+          resourceType: VirtualMachine
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: PowerShell@2
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      Write-Host "Running on $($env:COMPUTERNAME)"
