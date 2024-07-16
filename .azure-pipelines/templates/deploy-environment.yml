@@ -25,9 +25,9 @@ stages:
 
               - template: tasks/terraform-plan-and-apply.yml@ado-pipeline-templates
                 parameters:
-                  terraform-folder: 'terraform'
-                  terraform-var-file: 'tfvars/${{ parameters.environmentName }}.tfvars'
-                  terraform-backend-file: 'backends/${{ parameters.environmentName }}.backend.hcl'
+                  terraformFolder: 'terraform'
+                  terraformVarFile: 'tfvars/${{ parameters.environmentName }}.tfvars'
+                  terraformBackendFile: 'backends/${{ parameters.environmentName }}.backend.hcl'
                   AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
                   AZURE_TENANT_ID: $(AZURE_TENANT_ID)
                   AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
