@@ -23,7 +23,7 @@ stages:
               steps:
                 - checkout: self
 
-                - template: jobs/terraform-validate-and-plan.yml@ado-pipeline-templates
+                - template: jobs/terraform-plan-and-apply.yml@ado-pipeline-templates
                   parameters:
                     terraform-folder: 'terraform'
                     terraform-var-file: 'tfvars/${{ parameters.environmentName }}.tfvars'
