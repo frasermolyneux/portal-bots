@@ -9,42 +9,42 @@ parameters:
     type: string
 
 stages:
-  - stage: deploy_${{ parameters.environmentName }}
-    jobs:
-      - deployment: deploy_${{ parameters.environmentName }}
-        environment: ${{ parameters.azureEnvironment }}
+- stage: deploy_${{ parameters.environmentName }}
+  jobs:
+    - deployment: deploy_${{ parameters.environmentName }}
+      environment: ${{ parameters.azureEnvironment }}
 
-        workspace:
-          clean: all
+      workspace:
+        clean: all
 
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - checkout: self
 
-                - template: jobs/terraform-plan-and-apply.yml@ado-pipeline-templates
-                  parameters:
-                    terraform-folder: 'terraform'
-                    terraform-var-file: 'tfvars/${{ parameters.environmentName }}.tfvars'
-                    terraform-backend-file: 'backends/${{ parameters.environmentName }}.backend.hcl'
-                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-                    AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+              - template: tasks/terraform-plan-and-apply.yml@ado-pipeline-templates
+                parameters:
+                  terraform-folder: 'terraform'
+                  terraform-var-file: 'tfvars/${{ parameters.environmentName }}.tfvars'
+                  terraform-backend-file: 'backends/${{ parameters.environmentName }}.backend.hcl'
+                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
 
-      - deployment: 'DeployToVirtualMachine'
-        environment:
-          name: ${{ parameters.vmEnvironment }}
-          resourceType: VirtualMachine
+    - deployment: 'DeployToVirtualMachine'
+      environment:
+        name: ${{ parameters.vmEnvironment }}
+        resourceType: VirtualMachine
 
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - checkout: self
 
-                - task: PowerShell@2
-                  inputs:
-                    targetType: 'inline'
-                    script: |
-                      Write-Host "Running on $($env:COMPUTERNAME)"
+              - task: PowerShell@2
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    Write-Host "Running on $($env:COMPUTERNAME)"
