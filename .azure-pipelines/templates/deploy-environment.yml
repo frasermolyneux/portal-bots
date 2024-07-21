@@ -31,10 +31,10 @@ stages:
                   azureSubscription: "${{ parameters.azureSubscription }}"
                   terraformFolder: 'terraform'
                   terraformVarFile: 'tfvars/${{ parameters.environmentName }}.tfvars'
-                  terraformBackendFile: 'backends/${{ parameters.environmentName }}.backend.hcl'
-                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+                  backendResourceGroupName: '$(TF_BACKEND_RESOURCE_GROUP)'
+                  backendAzureRmStorageAccountName: '$(TF_BACKEND_STORAGE_ACCOUNT)'
+                  backendAzureRmContainerName: '$(TF_BACKEND_STORAGE_CONTAINER)'
+                  backendAzureRmKey: '$(TF_BACKEND_STORAGE_STATE_KEY)'
 
     - deployment: 'DeployToVirtualMachine'
       environment:
