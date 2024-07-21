@@ -32,9 +32,9 @@ stages:
                   terraformFolder: 'terraform'
                   terraformVarFile: 'tfvars/${{ parameters.environmentName }}.tfvars'
                   backendResourceGroupName: '$(TF_BACKEND_RESOURCE_GROUP)'
-                  backendAzureRmStorageAccountName: '$(TF_BACKEND_STORAGE_ACCOUNT)'
-                  backendAzureRmContainerName: '$(TF_BACKEND_STORAGE_CONTAINER)'
-                  backendAzureRmKey: '$(TF_BACKEND_STORAGE_STATE_KEY)'
+                  backendStorageAccountName: '$(TF_BACKEND_STORAGE_ACCOUNT)'
+                  backendContainerName: '$(TF_BACKEND_STORAGE_CONTAINER)'
+                  backendKey: '$(TF_BACKEND_STORAGE_STATE_KEY)'
 
     - deployment: 'DeployToVirtualMachine'
       environment:
