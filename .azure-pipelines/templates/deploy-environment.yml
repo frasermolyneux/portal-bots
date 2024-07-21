@@ -28,6 +28,7 @@ stages:
 
               - template: tasks/terraform-plan-and-apply.yml@ado-pipeline-templates
                 parameters:
+                  azureSubscription: "${{ parameters.azureSubscription }}"
                   terraformFolder: 'terraform'
                   terraformVarFile: 'tfvars/${{ parameters.environmentName }}.tfvars'
                   terraformBackendFile: 'backends/${{ parameters.environmentName }}.backend.hcl'
