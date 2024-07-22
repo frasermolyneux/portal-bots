@@ -11,7 +11,7 @@ parameters:
 stages:
 - stage: deploy_${{ parameters.environmentName }}
   jobs:
-    - deployment: deploy_${{ parameters.environmentName }}
+    - deployment: deploy_terraform
       environment: ${{ parameters.azureEnvironment }}
 
       variables:
@@ -37,11 +37,13 @@ stages:
                   backendKey: '$(TF_BACKEND_STORAGE_STATE_KEY)'
 
     - deployment: 'DeployToVirtualMachine'
-      dependsOn: deploy_${{ parameters.environmentName }}
+      dependsOn: deploy_terraform
 
       variables:
-        client_app_id: $[ dependencies.deploy_${{ parameters.environmentName }}.outputs['terraform_output.client_app_id'] ]
-        client_app_secret: $[ dependencies.deploy_${{ parameters.environmentName }}.outputs['terraform_output.client_app_secret'] ]
+      - name: client_app_id
+        value: $[ dependencies.deploy_terraform.outputs['terraform_output.client_app_id'] ]
+      - name: client_app_secret
+        value: $[ dependencies.deploy_terraform.outputs['terraform_output.client_app_secret'] ]
 
       environment:
         name: ${{ parameters.vmEnvironment }}
