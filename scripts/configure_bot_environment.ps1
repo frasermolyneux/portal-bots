@@ -10,12 +10,11 @@ Write-Host "Source working directory: $($sourceWorkingDirectory)"
 Write-Host "Client App ID: '$client_app_id'"
 
 # Read config from Terraform tfvars file
-$config = Get-Content "$sourceWorkingDirectory\terraform\tfvars\$environment.tfvars.json" | ConvertFrom-StringData
+$config = Get-Content "$sourceWorkingDirectory\terraform\tfvars\$environment.tfvars.json" | ConvertFrom-Json
 
-# Loop through configuration and write out
-foreach ($key in $config.Keys) {
-    Write-Host "$key : $($config[$key])"
-}
+Write-Host "Config.Environment: $($config.environment)"
+Write-Host "Config.Location: $($config.location)"
+Write-Host "Config.Instance: $($config.instance)"
 
 # Create install directory
 $installDirectory = "C:\bots\$environment"
