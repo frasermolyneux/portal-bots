@@ -7,6 +7,7 @@ param(
 
 Write-Host "Configuring '$($environment)' bot environment on $($env:COMPUTERNAME)"
 Write-Host "Source working directory: $($sourceWorkingDirectory)"
+Write-Host "Client App ID: '$client_app_id'"
 
 # Read config from Terraform tfvars file
 $config = Get-Content "$sourceWorkingDirectory\terraform\tfvars\$environment.tfvars" | ConvertFrom-StringData

@@ -41,9 +41,9 @@ stages:
 
       variables:
       - name: client_app_id
-        value: $[ dependencies.deploy_terraform.outputs['terraform_output.client_app_id'] ]
+        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.client_app_id'] ]
       - name: client_app_secret
-        value: $[ dependencies.deploy_terraform.outputs['terraform_output.client_app_secret'] ]
+        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.client_app_secret'] ]
 
       environment:
         name: ${{ parameters.vmEnvironment }}
