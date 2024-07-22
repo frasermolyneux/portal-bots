@@ -10,7 +10,7 @@ Write-Host "Source working directory: $($sourceWorkingDirectory)"
 Write-Host "Client App ID: '$client_app_id'"
 
 # Read config from Terraform tfvars file
-$config = Get-Content "$sourceWorkingDirectory\terraform\tfvars\$environment.tfvars" | ConvertFrom-StringData
+$config = Get-Content "$sourceWorkingDirectory\terraform\tfvars\$environment.tfvars.json" | ConvertFrom-StringData
 
 # Loop through configuration and write out
 foreach ($key in $config.Keys) {
