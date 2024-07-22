@@ -55,6 +55,6 @@ stages:
 
               - task: PowerShell@2
                 inputs:
-                  filePath: '../scripts/configure_bot_environment.ps1'
+                  filePath: 'scripts/configure_bot_environment.ps1'
                   arguments: '-environment ${{ parameters.environmentName }}'
                   
