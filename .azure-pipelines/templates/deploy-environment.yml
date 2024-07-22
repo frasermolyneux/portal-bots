@@ -37,6 +37,12 @@ stages:
                   backendKey: '$(TF_BACKEND_STORAGE_STATE_KEY)'
 
     - deployment: 'DeployToVirtualMachine'
+      dependsOn: deploy_${{ parameters.environmentName }}
+
+      variables:
+        client_app_id: $[ dependencies.deploy_${{ parameters.environmentName }}.outputs['terraform_output.client_app_id'] ]
+        client_app_secret: $[ dependencies.deploy_${{ parameters.environmentName }}.outputs['terraform_output.client_app_secret'] ]
+
       environment:
         name: ${{ parameters.vmEnvironment }}
         resourceType: VirtualMachine
@@ -56,5 +62,5 @@ stages:
               - task: PowerShell@2
                 inputs:
                   filePath: 'scripts/configure_bot_environment.ps1'
-                  arguments: '-environment ${{ parameters.environmentName }}'
+                  arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -client_app_id "$(client_app_id)" -client_app_secret "$(client_app_secret)"'
                   
