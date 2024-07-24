@@ -36,7 +36,7 @@ $accessToken = Get-AccessToken -clientId $client_app_id -clientSecret $client_ap
 
 # Get the game servers that are bot enabled
 $uri = "https://$($config.api_management_name).azure-api.net/$($config.repository_api.apim_path_prefix)/game-servers/"
-$servers = Get-BotEnabledServers -uri $uri -accessToken $accessToken -subscriptionKey $repository_subscription_key
+$servers = Get-BotEnabledServers -uri "$uri" -accessToken "$accessToken" -subscriptionKey "$repository_subscription_key"
 
 # Loop through the servers and configure the bot
 $servers | ForEach-Object {
