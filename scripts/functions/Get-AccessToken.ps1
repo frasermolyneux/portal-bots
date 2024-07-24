@@ -19,6 +19,8 @@ function Get-AccessToken {
             client_secret = $clientSecret
             grant_type    = "client_credentials"
         }
+
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         
         $tokenRequest = Invoke-WebRequest -Method Post -Uri $uri -ContentType "application/x-www-form-urlencoded" -Body $body -UseBasicParsing
         # Unpack Access Token
