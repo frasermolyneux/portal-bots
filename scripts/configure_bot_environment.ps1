@@ -38,9 +38,22 @@ $accessToken = Get-AccessToken -clientId $client_app_id -clientSecret $client_ap
 $uri = "https://$($config.api_management_name).azure-api.net/$($config.repository_api.apim_path_prefix)/game-servers/"
 $servers = Get-BotEnabledServers -uri "$uri" -accessToken "$accessToken" -subscriptionKey "$repository_subscription_key"
 
+# Stop the currently running scheduled tasks
+Get-ScheduledTask -TaskName "\Bots\*" | Stop-ScheduledTask
+Get-ScheduledTask -TaskName "\Bots\*" | Remove-ScheduledTask
+
 # Loop through the servers and configure the bot
 $servers | ForEach-Object {
     $server = $_
 
     Write-Host "Configuring bot for server: $($server.title)"
+
+    $action = New-ScheduledTaskAction -Execute "$installDirectory\b3.exe" -Argument "-c $installDirectory\conf\$($server.gameServerId).ini"
+    $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration ([System.TimeSpan]::MaxValue)
+    $principal = "NT AUTHORITY\SYSTEM"
+    $settings = New-ScheduledTaskSettingsSet
+    $task = New-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -Settings $settings
+    Register-ScheduledTask "\Bots\$($server.gameServerId)" -InputObject $task
 }
+
+
