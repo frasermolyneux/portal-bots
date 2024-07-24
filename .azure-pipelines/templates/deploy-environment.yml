@@ -44,6 +44,10 @@ stages:
         value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.client_app_id'] ]
       - name: client_app_secret
         value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.client_app_secret'] ]
+      - name: repository_subscription_key
+        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.repository_subscription_key'] ]
+      - name: event_ingest_subscription_key
+        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.event_ingest_subscription_key'] ]
 
       environment:
         name: ${{ parameters.vmEnvironment }}
@@ -64,5 +68,5 @@ stages:
               - task: PowerShell@2
                 inputs:
                   filePath: 'scripts/configure_bot_environment.ps1'
-                  arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -client_app_id "$(client_app_id)" -client_app_secret "$(client_app_secret)"'
+                  arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -client_app_id "$(client_app_id)" -client_app_secret "$(client_app_secret)" -repository_subscription_key "$(repository_subscription_key)" -event_ingest_subscription_key "$(event_ingest_subscription_key)"'
                   

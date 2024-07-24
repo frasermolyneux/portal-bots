@@ -21,8 +21,14 @@ resource "azuread_application_password" "client_app" {
   }
 }
 
-resource "azuread_app_role_assignment" "client_app" {
+resource "azuread_app_role_assignment" "repository_api" {
   app_role_id         = data.azuread_service_principal.repository_api.app_roles[index(data.azuread_service_principal.repository_api.app_roles.*.display_name, "ServiceAccount")].id
   principal_object_id = azuread_service_principal.client_app.object_id
   resource_object_id  = data.azuread_service_principal.repository_api.object_id
+}
+
+resource "azuread_app_role_assignment" "event_ingest_api" {
+  app_role_id         = data.azuread_service_principal.event_ingest_api.app_roles[index(data.azuread_service_principal.event_ingest_api.app_roles.*.display_name, "EventGenerator")].id
+  principal_object_id = azuread_service_principal.client_app.object_id
+  resource_object_id  = data.azuread_service_principal.event_ingest_api.object_id
 }

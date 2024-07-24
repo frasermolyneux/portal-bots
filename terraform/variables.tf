@@ -31,6 +31,23 @@ variable "repository_api" {
   }
 }
 
+variable "event_ingest_api" {
+  type = object({
+    application_name     = string
+    application_audience = string
+    apim_api_name        = string
+    apim_api_revision    = string
+    apim_path_prefix     = string
+  })
+  default = {
+    application_name     = "portal-event-ingest-dev-01"
+    application_audience = "api://portal-event-ingest-dev-01"
+    apim_api_name        = "event-ingest-api"
+    apim_api_revision    = "1"
+    apim_path_prefix     = "event-ingest"
+  }
+}
+
 variable "tags" {
   default = {}
 }
