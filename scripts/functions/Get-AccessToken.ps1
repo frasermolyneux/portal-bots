@@ -1,4 +1,4 @@
-function Get-MailAccessToken {
+function Get-AccessToken {
     [CmdletBinding()]
     param (
         [string]$tenantId = 'e56a6947-bb9a-4a6e-846a-1f118d1c3a14',
