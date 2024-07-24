@@ -17,5 +17,5 @@ resource "azurerm_api_management_subscription" "event_ingest_api" {
   allow_tracing = false
 
   api_id       = split(";", data.azurerm_api_management_api.event_ingest_api.id)[0] // Strip revision from id when creating subscription
-  display_name = format("%s-%s", local.application_name, data.azurerm_api_management_api.event_ingest_api)
+  display_name = format("%s-%s", local.application_name, data.azurerm_api_management_api.event_ingest_api.name)
 }

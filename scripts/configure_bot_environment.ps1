@@ -11,12 +11,21 @@ Write-Host "Configuring '$($environment)' bot environment on $($env:COMPUTERNAME
 Write-Host "Source working directory: $($sourceWorkingDirectory)"
 Write-Host "Client App ID: '$client_app_id'"
 
+# Load in the local functions
+Get-ChildItem -Path "$($sourceWorkingDirectory)\scripts\functions" -Filter "*.ps1" -Recurse | ForEach-Object {
+    Write-Host "Loading function file: $($_.Name)"
+    . $_.FullName
+}
+
 # Read config from Terraform tfvars file
 $config = Get-Content "$sourceWorkingDirectory\terraform\tfvars\$environment.tfvars.json" | ConvertFrom-Json
 
 Write-Host "Config.Environment: $($config.environment)"
 Write-Host "Config.Location: $($config.location)"
 Write-Host "Config.Instance: $($config.instance)"
+
+# Generate access token for the bot to access the repository api
+$accessToken = Get-AccessToken -clientId $client_app_id -clientSecret $client_app_secret -scope "$($config.repository_api.application_audience)/.default"
 
 # Create install directory
 $installDirectory = "C:\bots\$environment"
