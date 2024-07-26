@@ -35,9 +35,6 @@ stages:
                   backendStorageAccountName: '$(TF_BACKEND_STORAGE_ACCOUNT)'
                   backendContainerName: '$(TF_BACKEND_STORAGE_CONTAINER)'
                   backendKey: '$(TF_BACKEND_STORAGE_STATE_KEY)'
-                  AZURE_CLIENT_ID: '$(AZURE_CLIENT_ID)'
-                  AZURE_TENANT_ID: '$(AZURE_TENANT_ID)'
-                  AZURE_SUBSCRIPTION_ID: '$(AZURE_SUBSCRIPTION_ID)'
 
 
     - deployment: 'DeployToVirtualMachine'
