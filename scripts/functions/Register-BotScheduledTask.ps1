@@ -18,7 +18,9 @@ function Register-BotScheduledTask {
         $settings = New-ScheduledTaskSettingsSet
         $task = New-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -Settings $settings
         
-        Register-ScheduledTask "\Bots\$($server.gameServerId)" -InputObject $task
+        $registeredTask = Register-ScheduledTask "\Bots\$($server.gameServerId)" -InputObject $task
+
+        Write-Host $registeredTask
     }
     
     end {
