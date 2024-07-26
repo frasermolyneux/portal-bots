@@ -50,7 +50,7 @@ $servers | ForEach-Object {
 
     $action = New-ScheduledTaskAction -Execute "$installDirectory\b3.exe" -Argument "-c $installDirectory\conf\$($server.gameServerId).ini"
     $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration ([System.TimeSpan]::MaxValue)
-    $principal = "$($env:COMPUTERNAME)\NETWORK SERVICE"
+    $principal = New-ScheduledTaskPrincipal -UserId "LOCALSERVICE" -LogonType ServiceAccount
     $settings = New-ScheduledTaskSettingsSet
     $task = New-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -Settings $settings
     Register-ScheduledTask "\Bots\$($server.gameServerId)" -InputObject $task
