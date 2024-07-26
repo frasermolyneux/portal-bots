@@ -5,10 +5,11 @@ function Unregister-BotScheduledTask {
     )
     
     begin {
-        Write-Host "Unregistering bot scheduled task: $($task.Name) from path $($task.Path)"
+        
     }
     
     process {
+        Write-Host "Unregistering bot scheduled task: $($task.Name) from path $($task.Path)"
         $task | Stop-ScheduledTask
         $task | Unregister-ScheduledTask
     }
