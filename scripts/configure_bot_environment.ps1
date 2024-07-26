@@ -40,7 +40,7 @@ $servers = Get-BotEnabledServers -uri "$uri" -accessToken "$accessToken" -subscr
 
 # Stop the currently running scheduled tasks
 Get-ScheduledTask -TaskName "\Bots\*" | Stop-ScheduledTask
-Get-ScheduledTask -TaskName "\Bots\*" | Remove-ScheduledTask
+Get-ScheduledTask -TaskName "\Bots\*" | Unregister-ScheduledTask
 
 # Loop through the servers and configure the bot
 $servers | ForEach-Object {
