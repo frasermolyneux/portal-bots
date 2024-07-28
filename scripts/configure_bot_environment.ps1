@@ -39,6 +39,7 @@ $uri = "https://$($config.api_management_name).azure-api.net/$($config.repositor
 $servers = Get-BotEnabledServers -uri "$uri" -accessToken "$accessToken" -subscriptionKey "$repository_subscription_key"
 
 # Stop the currently running scheduled tasks
+Get-ScheduledTask
 Get-ScheduledTask -TaskName "\Bots\*" | Unregister-BotScheduledTask
 
 # Loop through the servers and configure the bot
