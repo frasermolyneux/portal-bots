@@ -69,5 +69,5 @@ stages:
                 inputs:
                   pwsh: true
                   filePath: 'scripts/Deploy-BotEnvironment.ps1'
-                  arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -client_app_id "$(client_app_id)" -client_app_secret "$(client_app_secret)" -repository_subscription_key "$(repository_subscription_key)" -event_ingest_subscription_key "$(event_ingest_subscription_key)" -mysql_connection_string "$(mysql_connection_string)"'
+                  arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -client_app_id "$(client_app_id)" -client_app_secret "$(client_app_secret)" -repository_subscription_key "$(repository_subscription_key)" -event_ingest_subscription_key "$(event_ingest_subscription_key)" -mysql_connection_string "hmmm"'
                   
