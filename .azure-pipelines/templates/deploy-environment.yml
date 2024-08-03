@@ -68,6 +68,6 @@ stages:
               - task: PowerShell@2
                 inputs:
                   pwsh: true
-                  filePath: 'scripts/configure_bot_environment.ps1'
+                  filePath: 'scripts/Deploy-BotEnvironment.ps1'
                   arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -client_app_id "$(client_app_id)" -client_app_secret "$(client_app_secret)" -repository_subscription_key "$(repository_subscription_key)" -event_ingest_subscription_key "$(event_ingest_subscription_key)" -mysql_connection_string "$(mysql_connection_string)"'
                   
