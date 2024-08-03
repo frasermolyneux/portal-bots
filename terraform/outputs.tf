@@ -16,3 +16,8 @@ output "event_ingest_subscription_key" {
   value     = azurerm_api_management_subscription.event_ingest_api.primary_key
   sensitive = true
 }
+
+output "mysql_connection_string" {
+  value     = azurerm_key_vault_secret.mysql_connection_string.value
+  sensitive = true
+}
