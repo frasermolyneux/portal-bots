@@ -4,7 +4,8 @@ param(
     [string]$client_app_id,
     [string]$client_app_secret,
     [string]$repository_subscription_key,
-    [string]$event_ingest_subscription_key
+    [string]$event_ingest_subscription_key,
+    [string]$mysql_connection_string
 )
 
 Write-Host "Configuring '$($environment)' bot environment on $($env:COMPUTERNAME)"
