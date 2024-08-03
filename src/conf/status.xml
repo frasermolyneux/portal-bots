@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<B3Status Time="Sat May 28 16:43:00 2022">
+        <Game CaptureLimit="" FragLimit="" Ip="162.248.95.175" Map="" MapTime="1352274" Name="cod5" OnlinePlayers="0" Port="28960" RoundTime="1352274" Rounds="1" TimeLimit="" Type="">
+                <Data Name="console" Value="&lt;b3.parsers.cod5.Cod5Parser object at 0x01A4DDB0&gt;"/>
+                <Data Name="fs_basepath" Value="None"/>
+                <Data Name="fs_homepath" Value="None"/>
+                <Data Name="gameName" Value="cod5"/>
+                <Data Name="fs_game" Value="None"/>
+                <Data Name="shortversion" Value="None"/>
+                <Data Name="_roundTimeStart" Value="1652418307"/>
+                <Data Name="_mapTimeStart" Value="1652418307"/>
+                <Data Name="rounds" Value="1"/>
+                <Data Name="_mapName" Value="None"/>
+        </Game>
+        <Clients Total="0"/>
+</B3Status>
