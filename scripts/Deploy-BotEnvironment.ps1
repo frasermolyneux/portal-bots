@@ -53,7 +53,7 @@ Start-Sleep -Seconds 5
 Get-Process -Name "b3" -ErrorAction SilentlyContinue | Stop-Process -Force
 
 # Delete the existing bot configuration from the install directory
-Get-ChildItem -Path $installDirectory -Filter "*" | Remove-Item -Recurse -Force
+Get-ChildItem -Path $installDirectory -Filter "*" | Remove-Item -Recurse -Force -ErrorAction Continue
 
 # Copy the src files into the install directory
 Copy-Item -Path "$sourceWorkingDirectory\src\*" -Destination $installDirectory -Recurse -Force
