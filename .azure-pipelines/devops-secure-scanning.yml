@@ -27,3 +27,16 @@ stages:
   - stage: build
     jobs:
       - template: jobs/devops-secure-scanning.yml@ado-pipeline-templates
+
+      - job: codeql
+        steps:
+        - task: AdvancedSecurity-Codeql-Init@1
+          displayName: Initialize CodeQL
+          inputs:
+            # build mode `none` is supported for C# and Java, and JavaScript is an interpreted language
+            # and build mode `none` has no impact on JavaScript analysis
+            languages: 'csharp, java, javascript' 
+            buildtype: 'none'
+
+        - task: AdvancedSecurity-Codeql-Analyze@1
+          displayName: Perform CodeQL Analysis
