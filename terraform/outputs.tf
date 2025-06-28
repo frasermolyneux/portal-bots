@@ -8,7 +8,7 @@ output "client_app_secret" {
 }
 
 output "repository_subscription_key" {
-  value     = azurerm_api_management_subscription.repository_api.primary_key
+  value     = azurerm_api_management_subscription.repository_api_subscription.primary_key
   sensitive = true
 }
 
