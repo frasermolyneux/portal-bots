@@ -1,3 +1,4 @@
+# checkov:skip=CKV_AZURE_189 (Ensure that Azure Key Vault disables public network access) - This is by design
 resource "azurerm_key_vault" "kv" {
   name                = local.key_vault_name
   location            = azurerm_resource_group.rg.location
