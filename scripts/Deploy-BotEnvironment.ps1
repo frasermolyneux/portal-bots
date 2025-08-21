@@ -41,7 +41,7 @@ if ((Test-Path -Path $logsDirectory) -ne $true) {
 $accessToken = Get-AccessToken -clientId $client_app_id -clientSecret $client_app_secret -scope "$($config.repository_api.application_audience)/.default"
 
 # Get the game servers that are bot enabled
-$uri = "https://$($config.api_management_name).azure-api.net/$($config.repository_api.apim_path_prefix)/game-servers/"
+$uri = "https://$($config.api_management_name).azure-api.net/$($config.repository_api.apim_path_prefix)/v1/game-servers"
 $servers = Get-BotEnabledServers -uri "$uri" -accessToken "$accessToken" -subscriptionKey "$repository_subscription_key"
 
 # Stop the currently running scheduled tasks
@@ -62,7 +62,7 @@ Copy-Item -Path "$sourceWorkingDirectory\src\*" -Destination $installDirectory -
 $servers | Generate-BotConfigFiles -installDirectory $installDirectory `
     -environment $environment `
     -event_ingest_subscription_key $event_ingest_subscription_key `
-    -apimUrlBase "https://$($config.api_management_name).azure-api.net/$($config.event_ingest_api.apim_path_prefix)" `
+    -apimUrlBase "https://$($config.api_management_name).azure-api.net/$($config.event_ingest_api.apim_path_prefix)/v1" `
     -client_app_id $client_app_id `
     -client_app_secret $client_app_secret `
     -application_audience $config.event_ingest_api.application_audience `
