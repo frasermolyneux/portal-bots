@@ -21,7 +21,7 @@ function Get-BotEnabledServers {
         }
 
         $response = Invoke-RestMethod @Params
-        $servers = $response.result.entries
+        $servers = $response.result.data.items
 
         return $servers
     }
