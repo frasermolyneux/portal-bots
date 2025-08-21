@@ -19,13 +19,11 @@ variable "repository_api" {
     application_name     = string
     application_audience = string
     apim_product_id      = string
-    apim_path_prefix     = string
   })
   default = {
     application_name     = "portal-repository-dev-01"
     application_audience = "api://portal-repository-dev-01"
     apim_product_id      = ""
-    apim_path_prefix     = "repository/v1"
   }
 }
 
@@ -34,13 +32,11 @@ variable "event_ingest_api" {
     application_name     = string
     application_audience = string
     apim_product_id      = string
-    apim_path_prefix     = string
   })
   default = {
     application_name     = "portal-event-ingest-dev-01"
     application_audience = "api://portal-event-ingest-dev-01"
     apim_product_id      = ""
-    apim_path_prefix     = "event-ingest"
   }
 }
 
