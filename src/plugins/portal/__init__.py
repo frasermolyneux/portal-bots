@@ -255,12 +255,16 @@ class PortalPlugin(b3.plugin.Plugin):
 
     def _setupSession(self):
         self._session = requests.Session()
-        retry = Retry(
-            total=3,
-            backoff_factor=0.5,
-            status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["POST"]
-        )
+        retry_kwargs = {
+            'total': 3,
+            'backoff_factor': 0.5,
+            'status_forcelist': [429, 500, 502, 503, 504]
+        }
+
+        try:
+            retry = Retry(allowed_methods=["POST"], raise_on_status=False, **retry_kwargs)
+        except TypeError:
+            retry = Retry(method_whitelist=["POST"], **retry_kwargs)
         adapter = HTTPAdapter(max_retries=retry)
         self._session.mount('https://', adapter)
         self._session.mount('http://', adapter)
