@@ -54,14 +54,14 @@ class PortalPlugin(b3.plugin.Plugin):
         self._scope = self.getSetting('settings', 'scope', b3.STR, self._scope)
         self._pemFilePath = self.getSetting('settings', 'pemFilePath', b3.STR, self._pemFilePath)
 
-        default_spool_dir = os.path.join(tempfile.gettempdir(), 'portal_spool')
-        unique_name = self._serverId if self._serverId else 'unknown_server'
-        default_spool_path = os.path.join(default_spool_dir, 'portal_%s.jsonl' % unique_name)
-        self._spoolPath = self.getSetting('settings', 'spoolPath', b3.STR, default_spool_path)
-        try:
-            os.makedirs(os.path.dirname(self._spoolPath), exist_ok=True)
-        except Exception as e:
-            self.error('Failed to ensure spool directory exists: %s' % e)
+        self._spoolPath = self.getSetting('settings', 'spoolPath', b3.STR, self._spoolPath)
+        if not self._spoolPath:
+            self.error('spoolPath must be configured for portal plugin; offline queue will be disabled')
+        else:
+            try:
+                os.makedirs(os.path.dirname(self._spoolPath), exist_ok=True)
+            except Exception as e:
+                self.error('Failed to ensure spool directory exists: %s' % e)
 
         if not self._apimUrlBase or not self._tenantId or not self._clientId or not self._clientSecret:
             self.error('Portal plugin configuration is missing required settings; outbound calls will fail until fixed')
@@ -259,8 +259,7 @@ class PortalPlugin(b3.plugin.Plugin):
             total=3,
             backoff_factor=0.5,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["POST"],
-            raise_on_status=False
+            allowed_methods=["POST"]
         )
         adapter = HTTPAdapter(max_retries=retry)
         self._session.mount('https://', adapter)

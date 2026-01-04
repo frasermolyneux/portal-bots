@@ -52,6 +52,7 @@ function Generate-BotConfigFiles {
             "__PEM_FILE_PATH__"           = "$installDirectory\cacert.pem"
             "__LOGS_DIRECTORY__"          = $logsDirectory
             "__MYSQL_CONNECTION_STRING__" = $mysql_connection_string
+            "__SPOOL_PATH__"              = (Join-Path (Join-Path $logsDirectory 'spool') "portal_$($server.gameType)_$($server.gameServerId).jsonl")
         }
 
         # Replace $conf1 using the $tokenReplacements hashtable

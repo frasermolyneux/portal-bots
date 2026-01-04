@@ -29,12 +29,18 @@ Write-Host "Config.Instance: $($config.instance)"
 $installDirectory = "C:\bots\$environment\app"
 $logsDirectory = "C:\bots\$environment\logs"
 
+$spoolDirectory = Join-Path $logsDirectory 'spool'
+
 if ((Test-Path -Path $installDirectory) -ne $true) {
     New-Item -Path $installDirectory -ItemType Directory -Verbose
 }
 
 if ((Test-Path -Path $logsDirectory) -ne $true) {
     New-Item -Path $logsDirectory -ItemType Directory -Verbose
+}
+
+if ((Test-Path -Path $spoolDirectory) -ne $true) {
+    New-Item -Path $spoolDirectory -ItemType Directory -Verbose
 }
 
 # Generate access token for the bot to access the repository api
