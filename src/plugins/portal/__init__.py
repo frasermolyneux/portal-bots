@@ -14,7 +14,11 @@ import os
 import tempfile
 from datetime import datetime, timedelta
 from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
+try:
+    from urllib3.util import Retry
+except ImportError:
+    # Older environments may vendor urllib3 under requests
+    from requests.packages.urllib3.util import Retry
 
 
 class PortalPlugin(b3.plugin.Plugin):
