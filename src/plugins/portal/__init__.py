@@ -57,11 +57,6 @@ class PortalPlugin(b3.plugin.Plugin):
         self._spoolPath = self.getSetting('settings', 'spoolPath', b3.STR, self._spoolPath)
         if not self._spoolPath:
             self.error('spoolPath must be configured for portal plugin; offline queue will be disabled')
-        else:
-            try:
-                os.makedirs(os.path.dirname(self._spoolPath), exist_ok=True)
-            except Exception as e:
-                self.error('Failed to ensure spool directory exists: %s' % e)
 
         if not self._apimUrlBase or not self._tenantId or not self._clientId or not self._clientSecret:
             self.error('Portal plugin configuration is missing required settings; outbound calls will fail until fixed')
