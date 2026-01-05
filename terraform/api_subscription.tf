@@ -16,6 +16,6 @@ resource "azurerm_api_management_subscription" "event_ingest_api" {
   state         = "active"
   allow_tracing = false
 
-  product_id   = data.azurerm_api_management_product.event_ingest_api_product.id
-  display_name = format("%s-%s", local.application_name, data.azurerm_api_management_product.event_ingest_api_product.product_id)
+  product_id   = data.terraform_remote_state.portal_core.outputs.event_ingest_api.product_resource_id
+  display_name = format("%s-%s", local.application_name, data.terraform_remote_state.portal_core.outputs.event_ingest_api.product_id)
 }

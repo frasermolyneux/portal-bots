@@ -1,3 +1,3 @@
 data "azurerm_resource_group" "core" {
-  name = "rg-portal-core-${var.environment}-${var.location}-${var.instance}"
+  name = data.terraform_remote_state.portal_core.outputs.api_management.resource_group_name
 }
