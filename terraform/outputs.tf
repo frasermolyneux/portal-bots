@@ -25,3 +25,7 @@ output "mysql_connection_string" {
   value     = azurerm_key_vault_secret.mysql_connection_string.value
   sensitive = true
 }
+
+output "api_management_gateway_url" {
+  value = data.terraform_remote_state.portal_core.outputs.api_management.gateway_url
+}

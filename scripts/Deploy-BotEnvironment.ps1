@@ -6,7 +6,8 @@ param(
     [string]$repository_subscription_key,
     [string]$event_ingest_subscription_key,
     [string]$event_ingest_application_audience,
-    [string]$mysql_connection_string
+    [string]$mysql_connection_string,
+    [string]$api_management_gateway_url
 )
 
 Write-Host "Configuring '$($environment)' bot environment on $($env:COMPUTERNAME)"
@@ -44,12 +45,29 @@ if ((Test-Path -Path $spoolDirectory) -ne $true) {
     New-Item -Path $spoolDirectory -ItemType Directory -Verbose
 }
 
+# Work out the APIM gateway base URL from arguments first, then tfvars fallbacks
+if ([string]::IsNullOrWhiteSpace($api_management_gateway_url)) {
+    if ($config.PSObject.Properties.Name -contains "api_management_gateway_url" -and -not [string]::IsNullOrWhiteSpace($config.api_management_gateway_url)) {
+        $api_management_gateway_url = $config.api_management_gateway_url
+    }
+    elseif ($config.PSObject.Properties.Name -contains "api_management_name" -and -not [string]::IsNullOrWhiteSpace($config.api_management_name)) {
+        $api_management_gateway_url = "https://$($config.api_management_name).azure-api.net"
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($api_management_gateway_url)) {
+    throw "API Management gateway URL is missing. Provide -api_management_gateway_url or set api_management_gateway_url/api_management_name in the environment tfvars."
+}
+
+$apimGatewayBase = $api_management_gateway_url.TrimEnd('/')
+Write-Host "Using API Management gateway: $apimGatewayBase"
+
 # Generate access token for the bot to access the repository api
 $accessToken = Get-AccessToken -clientId $client_app_id -clientSecret $client_app_secret -scope "$($config.repository_api.application_audience)/.default"
 
 # Get the game servers that are bot enabled
-$uri = "https://$($config.api_management_name).azure-api.net/repository/v1/game-servers"
-$servers = Get-BotEnabledServers -uri "$uri" -accessToken "$accessToken" -subscriptionKey "$repository_subscription_key"
+$repositoryUri = "$apimGatewayBase/repository/v1/game-servers"
+$servers = Get-BotEnabledServers -uri "$repositoryUri" -accessToken "$accessToken" -subscriptionKey "$repository_subscription_key"
 
 # Stop the currently running scheduled tasks
 @(Get-ScheduledTask -TaskPath "\Bots\*") | Unregister-BotScheduledTask
@@ -69,7 +87,7 @@ Copy-Item -Path "$sourceWorkingDirectory\src\*" -Destination $installDirectory -
 $servers | Generate-BotConfigFiles -installDirectory $installDirectory `
     -environment $environment `
     -event_ingest_subscription_key $event_ingest_subscription_key `
-    -apimUrlBase "https://$($config.api_management_name).azure-api.net/event-ingest/v1" `
+    -apimUrlBase "$($apimGatewayBase)/event-ingest/v1" `
     -client_app_id $client_app_id `
     -client_app_secret $client_app_secret `
     -application_audience $event_ingest_application_audience `
