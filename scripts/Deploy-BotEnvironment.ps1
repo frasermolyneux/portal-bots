@@ -5,6 +5,7 @@ param(
     [string]$client_app_secret,
     [string]$repository_subscription_key,
     [string]$event_ingest_subscription_key,
+    [string]$event_ingest_application_audience,
     [string]$mysql_connection_string
 )
 
@@ -71,7 +72,7 @@ $servers | Generate-BotConfigFiles -installDirectory $installDirectory `
     -apimUrlBase "https://$($config.api_management_name).azure-api.net/event-ingest/v1" `
     -client_app_id $client_app_id `
     -client_app_secret $client_app_secret `
-    -application_audience $config.event_ingest_api.application_audience `
+    -application_audience $event_ingest_application_audience `
     -logsDirectory $logsDirectory `
     -mysql_connection_string $mysql_connection_string
 

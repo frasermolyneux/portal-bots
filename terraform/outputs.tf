@@ -17,6 +17,10 @@ output "event_ingest_subscription_key" {
   sensitive = true
 }
 
+output "event_ingest_api_audience" {
+  value = data.terraform_remote_state.portal_environments.outputs.event_ingest_api.application.primary_identifier_uri
+}
+
 output "mysql_connection_string" {
   value     = azurerm_key_vault_secret.mysql_connection_string.value
   sensitive = true
