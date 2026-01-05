@@ -3,5 +3,5 @@ data "azuread_service_principal" "repository_api" {
 }
 
 data "azuread_service_principal" "event_ingest_api" {
-  display_name = var.event_ingest_api.application_name
+  display_name = data.terraform_remote_state.portal_environments.outputs.event_ingest_api.application.display_name
 }
