@@ -32,7 +32,6 @@ class PortalPlugin(b3.plugin.Plugin):
     _tenantId = ""
     _clientId = ""
     _clientSecret = ""
-    _apiSubscriptionKey = ""
     _scope = ""
     _pemFilePath = ""
     _spoolPath = ""
@@ -50,7 +49,6 @@ class PortalPlugin(b3.plugin.Plugin):
         self._tenantId = self.getSetting('settings', 'tenantId', b3.STR, self._tenantId)
         self._clientId = self.getSetting('settings', 'clientId', b3.STR, self._clientId)
         self._clientSecret = self.getSetting('settings', 'clientSecret', b3.STR, self._clientSecret)
-        self._apiSubscriptionKey = self.getSetting('settings', 'apiSubscriptionKey', b3.STR, self._apiSubscriptionKey)
         self._scope = self.getSetting('settings', 'scope', b3.STR, self._scope)
         self._pemFilePath = self.getSetting('settings', 'pemFilePath', b3.STR, self._pemFilePath)
 
@@ -339,6 +337,5 @@ class PortalPlugin(b3.plugin.Plugin):
         token = self.generateAccessToken()
         return {
             'Content-Type': 'application/json',
-            'Ocp-Apim-Subscription-Key': self._apiSubscriptionKey,
             'Authorization': 'Bearer ' + token if token else ''
         }

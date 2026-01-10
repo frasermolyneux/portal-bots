@@ -2,8 +2,7 @@ function Get-BotEnabledServers {
     [CmdletBinding()]
     param (
         [string]$uri,
-        [string]$accessToken,
-        [string]$subscriptionKey
+        [string]$accessToken
     )
     
     begin {
@@ -15,9 +14,7 @@ function Get-BotEnabledServers {
             Uri            = $uri + "?filter=BotEnabled&takeEntries=50&skipEntries=0"
             Authentication = "Bearer"
             Token          = $accessToken | ConvertTo-SecureString -AsPlainText -Force
-            Headers        = @{
-                "Ocp-Apim-Subscription-Key" = $subscriptionKey
-            }
+            Headers        = @{}
         }
 
         $response = Invoke-RestMethod @Params

@@ -30,7 +30,7 @@ stages:
                 parameters:
                   azureSubscription: "${{ parameters.azureSubscription }}"
                   terraformFolder: 'terraform'
-                  terraformVarFile: 'tfvars/${{ parameters.environmentName }}.tfvars.json'
+                  terraformVarFile: 'tfvars/${{ parameters.environmentName }}.tfvars'
                   terraformBackendFile: 'backends/${{ parameters.environmentName }}.backend.hcl'
 
     - deployment: 'DeployToVirtualMachine'
@@ -41,16 +41,16 @@ stages:
         value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.client_app_id'] ]
       - name: client_app_secret
         value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.client_app_secret'] ]
-      - name: repository_subscription_key
-        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.repository_subscription_key'] ]
-      - name: event_ingest_subscription_key
-        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.event_ingest_subscription_key'] ]
+      - name: repository_api_audience
+        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.repository_api_audience'] ]
       - name: event_ingest_api_audience
         value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.event_ingest_api_audience'] ]
       - name: mysql_connection_string
         value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.mysql_connection_string'] ]
-      - name: api_management_gateway_url
-        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.api_management_gateway_url'] ]
+      - name: repository_api_base_url
+        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.repository_api_base_url'] ]
+      - name: event_ingest_api_base_url
+        value: $[ dependencies.deploy_terraform.outputs['deploy_terraform.terraform_output.event_ingest_api_base_url'] ]
 
       environment:
         name: ${{ parameters.vmEnvironment }}
@@ -73,5 +73,5 @@ stages:
                 inputs:
                   pwsh: true
                   filePath: 'scripts/Deploy-BotEnvironment.ps1'
-                  arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -client_app_id "$(client_app_id)" -client_app_secret "$(client_app_secret)" -repository_subscription_key "$(repository_subscription_key)" -event_ingest_subscription_key "$(event_ingest_subscription_key)" -event_ingest_application_audience "$(event_ingest_api_audience)" -mysql_connection_string "$(mysql_connection_string)" -api_management_gateway_url "$(api_management_gateway_url)"'
+                  arguments: '-sourceWorkingDirectory "$(System.DefaultWorkingDirectory)" -environment "${{ parameters.environmentName }}" -clientAppId "$(client_app_id)" -clientAppSecret "$(client_app_secret)" -repositoryApplicationAudience "$(repository_api_audience)" -eventIngestApplicationAudience "$(event_ingest_api_audience)" -mysqlConnectionString "$(mysql_connection_string)" -repositoryApiBaseUrl "$(repository_api_base_url)" -eventIngestApiBaseUrl "$(event_ingest_api_base_url)"'
                   

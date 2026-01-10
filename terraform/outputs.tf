@@ -1,31 +1,47 @@
+data "azurerm_key_vault_secret" "portal_bots_client_secret" {
+  name         = local.portal_bots.key_vault.secrets.client_secret.name
+  key_vault_id = local.portal_bots.key_vault.id
+}
+
+data "azurerm_key_vault_secret" "mysql_connection_string" {
+  name         = azurerm_key_vault_secret.mysql_connection_string.name
+  key_vault_id = azurerm_key_vault.kv.id
+}
+
 output "client_app_id" {
-  value = azuread_application.client_app.client_id
+  description = "Portal bots application client id."
+  value       = local.portal_bots.application.client_id
 }
 
 output "client_app_secret" {
-  value     = azuread_application_password.client_app.value
-  sensitive = true
+  description = "Portal bots application client secret for bot configuration."
+  value       = data.azurerm_key_vault_secret.portal_bots_client_secret.value
+  sensitive   = true
 }
 
-output "repository_subscription_key" {
-  value     = azurerm_api_management_subscription.repository_api_subscription.primary_key
-  sensitive = true
-}
-
-output "event_ingest_subscription_key" {
-  value     = azurerm_api_management_subscription.event_ingest_api.primary_key
-  sensitive = true
+output "repository_api_audience" {
+  description = "Audience for acquiring tokens for the repository API."
+  value       = local.repository_api.application.primary_identifier_uri
 }
 
 output "event_ingest_api_audience" {
-  value = data.terraform_remote_state.portal_environments.outputs.event_ingest_api.application.primary_identifier_uri
+  description = "Audience for acquiring tokens for the event ingest API."
+  value       = local.event_ingest_api.application.primary_identifier_uri
 }
 
 output "mysql_connection_string" {
-  value     = azurerm_key_vault_secret.mysql_connection_string.value
-  sensitive = true
+  description = "MySQL connection string used by the bots."
+  value       = data.azurerm_key_vault_secret.mysql_connection_string.value
+  sensitive   = true
 }
 
-output "api_management_gateway_url" {
-  value = data.terraform_remote_state.portal_core.outputs.api_management.gateway_url
+output "repository_api_base_url" {
+  description = "Base URL for the repository API (APIM front door)."
+  value       = local.repository_api.api_management.endpoint
 }
+
+output "event_ingest_api_base_url" {
+  description = "Base URL for the event ingest API (APIM front door)."
+  value       = local.event_ingest_api.api_management.endpoint
+}
+
