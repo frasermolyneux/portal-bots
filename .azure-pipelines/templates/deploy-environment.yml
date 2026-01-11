@@ -72,15 +72,19 @@ stages:
               - task: PowerShell@2
                 inputs:
                   pwsh: true
-                  filePath: 'scripts/Deploy-BotEnvironment.ps1'
-                  arguments: >-
-                    -sourceWorkingDirectory "`$(System.DefaultWorkingDirectory)`"
-                    -environment "${{ parameters.environmentName }}"
-                    -clientAppId "$(client_app_id)"
-                    -clientAppSecret "$(client_app_secret)"
-                    -repositoryApplicationAudience "$(repository_api_audience)"
-                    -eventIngestApplicationAudience "$(event_ingest_api_audience)"
-                    -mysqlConnectionString "$(mysql_connection_string)"
-                    -repositoryApiBaseUrl "$(repository_api_base_url)"
-                    -eventIngestApiBaseUrl "$(event_ingest_api_base_url)"
+                  targetType: inline
+                  script: |
+                    $params = @{
+                      sourceWorkingDirectory         = "$(System.DefaultWorkingDirectory)"
+                      environment                    = "${{ parameters.environmentName }}"
+                      clientAppId                    = "$(client_app_id)"
+                      clientAppSecret                = "$(client_app_secret)"
+                      repositoryApplicationAudience  = "$(repository_api_audience)"
+                      eventIngestApplicationAudience = "$(event_ingest_api_audience)"
+                      mysqlConnectionString          = "$(mysql_connection_string)"
+                      repositoryApiBaseUrl           = "$(repository_api_base_url)"
+                      eventIngestApiBaseUrl          = "$(event_ingest_api_base_url)"
+                    }
+
+                    & "scripts/Deploy-BotEnvironment.ps1" @params
                   
