@@ -1,6 +1,15 @@
-# B3 Player and Communication Events Reference
+# B3 Events Reference for Portal Repository API
 
-This document provides a comprehensive reference of B3 (BigBrotherBot) player lifecycle and communication events available for capture and storage. This information is intended to be used for extending the portal repository API to support these events.
+This document provides a focused reference of B3 (BigBrotherBot) events selected for capture and storage by the portal repository API. These events support player lifecycle tracking, communication monitoring, game state management, and administration features.
+
+## Event Categories
+
+This document covers 16 specific event types organized into four categories:
+
+1. **Player Lifecycle Events** (5 events) - Track player connections and profile changes
+2. **Communication Events** (5 events) - Capture player chat and communication
+3. **Custom Plugin Events** (2 events) - Custom map voting functionality
+4. **Server and Game Events** (7 events) - Server state and game flow tracking
 
 ## Event Object Structure
 
@@ -21,357 +30,983 @@ When `event.client` or `event.target` is present, the client object contains:
 - `client.guid` - Unique player identifier (GUID)
 - `client.name` - Player name/nickname
 - `client.ip` - IP address
-- `client.team` - Current team
+- `client.team` - Current team identifier
 - `client.maxLevel` - Admin level
-- `client.connections` - Number of connections
+- `client.connections` - Number of connections to this server
 - Additional properties depending on game and plugins loaded
+
+- Additional properties depending on game and plugins loaded
+
+---
 
 ## Player Lifecycle Events
 
-Player lifecycle events track the connection state and profile changes of players throughout their session on the server.
+These events track player connections, authentication, and profile changes throughout their session on the server.
 
-### Connection and Authentication Events
+### EVT_CLIENT_CONNECT
 
-#### EVT_CLIENT_CONNECT
-Player initially connects to the server.
+**Event Type:** Player Lifecycle  
+**Description:** Triggered when a player initially establishes connection to the server, before authentication.
 
-**Available Data:**
-- `event.client` - Client object of the connecting player
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client       # Client object of connecting player
+}
+```
 
-**Typical Usage:** Track when players first establish connection to the server, before authentication.
+**Available Client Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name/nickname
+- `client.ip` - IP address
+- `client.connections` - Connection count to this server
 
----
+**Typical Usage:** Track initial connection attempts, monitor connection patterns, detect connection issues.
 
-#### EVT_CLIENT_AUTH
-Player successfully authenticates/is authorized.
-
-**Available Data:**
-- `event.client` - Client object of the authenticated player
-
-**Typical Usage:** Track successful player authentication, confirming their identity.
-
----
-
-#### EVT_CLIENT_JOIN
-Player joins the game (post-authentication).
-
-**Available Data:**
-- `event.client` - Client object of the joining player
-
-**Typical Usage:** Track when players actually join the game after connection and authentication.
-
----
-
-#### EVT_CLIENT_DISCONNECT
-Player disconnects from server.
-
-**Available Data:**
-- `event.client` - Client object of the disconnecting player
-
-**Typical Usage:** Track when players leave the server, useful for session duration calculations.
+**Example:**
+```python
+def onConnect(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_CONNECT',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'playerGuid': event.client.guid,
+        'playerName': str(event.client.name),
+        'playerIpAddress': event.client.ip,
+        'connectionNumber': event.client.connections
+    }
+```
 
 ---
 
-### Player State Change Events
+### EVT_CLIENT_AUTH
 
-#### EVT_CLIENT_NAME_CHANGE
-Player changes their name/nickname.
+**Event Type:** Player Lifecycle  
+**Description:** Triggered when a player successfully authenticates and their identity is confirmed by the server.
 
-**Available Data:**
-- `event.client` - Client object with the new name
-- `event.data` - String containing the new name
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client       # Client object of authenticated player
+}
+```
 
-**Typical Usage:** Track player identity changes, maintain name history for audit trails.
+**Available Client Properties:**
+- `client.guid` - Confirmed unique player identifier (GUID)
+- `client.name` - Authenticated player name
+- `client.maxLevel` - Player's admin level
+- `client.id` - Database ID (if player is registered)
+
+**Typical Usage:** Confirm player identity, track successful authentications, link to player profiles.
+
+**Example:**
+```python
+def onAuth(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_AUTH',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'playerGuid': event.client.guid,
+        'playerName': str(event.client.name),
+        'playerDbId': event.client.id,
+        'playerLevel': event.client.maxLevel
+    }
+```
 
 ---
 
-#### EVT_CLIENT_TEAM_CHANGE
-Player changes team.
+### EVT_CLIENT_JOIN
 
-**Available Data:**
-- `event.client` - Client object
-- `event.data` - New team identifier
+**Event Type:** Player Lifecycle  
+**Description:** Triggered when a player joins the game after successful connection and authentication.
 
-**Typical Usage:** Track team switches, useful for balancing analytics and team loyalty metrics.
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client       # Client object of joining player
+}
+```
+
+**Available Client Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- `client.team` - Initial team assignment
+- `client.maxLevel` - Admin level
+
+**Typical Usage:** Track active player joins, record session start time, initialize player state.
+
+**Example:**
+```python
+def onJoin(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_JOIN',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'playerGuid': event.client.guid,
+        'playerName': str(event.client.name),
+        'playerTeam': event.client.team
+    }
+```
 
 ---
 
-#### EVT_CLIENT_UPDATE
-Client state update (general purpose).
+### EVT_CLIENT_DISCONNECT
 
-**Available Data:**
-- `event.client` - Client object with updated state
+**Event Type:** Player Lifecycle  
+**Description:** Triggered when a player disconnects from the server.
 
-**Typical Usage:** Track general client state changes not covered by specific events.
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client       # Client object of disconnecting player
+}
+```
+
+**Available Client Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- `client.timeAdd` - Connection timestamp (for session duration calculation)
+- `client.connections` - Total connection count
+
+**Typical Usage:** Track disconnections, calculate session duration, update player statistics.
+
+**Example:**
+```python
+def onDisconnect(self, event):
+    session_duration = None
+    if hasattr(event.client, 'timeAdd') and event.client.timeAdd:
+        session_duration = int(self.console.time() - event.client.timeAdd)
+    
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_DISCONNECT',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'playerGuid': event.client.guid,
+        'playerName': str(event.client.name),
+        'sessionDurationSeconds': session_duration
+    }
+```
+
+---
+
+### EVT_CLIENT_NAME_CHANGE
+
+**Event Type:** Player Lifecycle  
+**Description:** Triggered when a player changes their name/nickname during a session.
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client,      # Client object with new name
+    'event.data': str            # New player name
+}
+```
+
+**Available Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - New player name (current)
+- `event.data` - New name (same as client.name)
+
+**Typical Usage:** Track identity changes, maintain name history, detect suspicious name changes.
+
+**Example:**
+```python
+def onNameChange(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_NAME_CHANGE',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'playerGuid': event.client.guid,
+        'previousName': 'previous_name_if_available',  # Store previous name separately
+        'newName': str(event.data)
+    }
+```
 
 ---
 
 ## Communication Events
 
-Communication events capture all forms of player messages and chat interactions on the server.
+These events capture all forms of player messages and chat interactions on the server.
 
-### Chat Events
+### EVT_CLIENT_SAY
 
-#### EVT_CLIENT_SAY
-Public chat message to all players.
+**Event Type:** Communication  
+**Description:** Public chat message visible to all players on the server.
 
-**Available Data:**
-- `event.client` - Client object of the message sender
-- `event.data` - String containing the message text
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client,      # Client object of message sender
+    'event.data': str            # Message text
+}
+```
 
-**Typical Usage:** Capture public chat for moderation, chat logs, and community interaction analysis.
+**Available Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- `client.team` - Player's team
+- `event.data` - Message text content
 
-**Example Message:** "Good game everyone!"
+**Typical Usage:** Monitor public chat, detect inappropriate content, create chat logs, analyze communication patterns.
 
----
-
-#### EVT_CLIENT_TEAM_SAY
-Team-only chat message.
-
-**Available Data:**
-- `event.client` - Client object of the message sender
-- `event.data` - String containing the message text
-
-**Typical Usage:** Capture team-specific communication for team coordination analysis and moderation.
-
-**Example Message:** "Incoming enemies from the north!"
-
----
-
-#### EVT_CLIENT_SQUAD_SAY
-Squad-only chat message (game-specific, e.g., Battlefield).
-
-**Available Data:**
-- `event.client` - Client object of the message sender
-- `event.data` - String containing the message text
-
-**Typical Usage:** Capture squad-level tactical communication in games that support squad mechanics.
-
-**Note:** Only available in games with squad support (e.g., Battlefield series).
-
----
-
-#### EVT_CLIENT_PRIVATE_SAY
-Private message/whisper to specific player.
-
-**Available Data:**
-- `event.client` - Client object of the message sender
-- `event.data` - String containing the message text
-- Additional context may include target player information
-
-**Typical Usage:** Capture private messages for moderation and harassment detection.
-
-**Example Message:** "@PlayerName Can you help me with this objective?"
+**Example:**
+```python
+def onSay(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_SAY',
+        'communicationType': 'PUBLIC',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'senderGuid': event.client.guid,
+        'senderName': str(event.client.name),
+        'senderTeam': event.client.team,
+        'message': str(event.data),
+        'messageLength': len(str(event.data))
+    }
+```
 
 ---
 
-#### EVT_CLIENT_RADIO
-Radio command issued (game-specific).
+### EVT_CLIENT_TEAM_SAY
 
-**Available Data:**
-- `event.client` - Client object of the player issuing the radio command
-- `event.data` - String or identifier for the radio command
+**Event Type:** Communication  
+**Description:** Team-only chat message visible only to players on the same team.
 
-**Typical Usage:** Track use of in-game radio commands, useful for communication pattern analysis.
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client,      # Client object of message sender
+    'event.data': str            # Message text
+}
+```
+
+**Available Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- `client.team` - Player's team (message recipients)
+- `event.data` - Message text content
+
+**Typical Usage:** Monitor team communication, analyze tactical coordination, moderate team chat.
+
+**Example:**
+```python
+def onTeamSay(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_TEAM_SAY',
+        'communicationType': 'TEAM',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'senderGuid': event.client.guid,
+        'senderName': str(event.client.name),
+        'senderTeam': event.client.team,
+        'targetTeam': event.client.team,
+        'message': str(event.data),
+        'messageLength': len(str(event.data))
+    }
+```
+
+---
+
+### EVT_CLIENT_SQUAD_SAY
+
+**Event Type:** Communication  
+**Description:** Squad-only chat message visible only to players in the same squad (game-specific feature).
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client,      # Client object of message sender
+    'event.data': str            # Message text
+}
+```
+
+**Available Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- `client.team` - Player's team
+- `client.squad` - Squad identifier (if available)
+- `event.data` - Message text content
+
+**Typical Usage:** Monitor squad communication in games with squad mechanics (e.g., Battlefield series).
+
+**Note:** Only available in games with squad support.
+
+**Example:**
+```python
+def onSquadSay(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_SQUAD_SAY',
+        'communicationType': 'SQUAD',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'senderGuid': event.client.guid,
+        'senderName': str(event.client.name),
+        'senderTeam': event.client.team,
+        'squadId': getattr(event.client, 'squad', None),
+        'message': str(event.data),
+        'messageLength': len(str(event.data))
+    }
+```
+
+---
+
+### EVT_CLIENT_PRIVATE_SAY
+
+**Event Type:** Communication  
+**Description:** Private message (whisper) sent from one player to another specific player.
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client,      # Client object of message sender
+    'event.target': Client,      # Client object of message recipient (if available)
+    'event.data': str            # Message text
+}
+```
+
+**Available Properties:**
+- `client.guid` - Sender's unique player identifier (GUID)
+- `client.name` - Sender's player name
+- `target.guid` - Recipient's GUID (if event.target available)
+- `target.name` - Recipient's name (if event.target available)
+- `event.data` - Message text content
+
+**Typical Usage:** Monitor private messages for harassment detection, maintain private message logs for moderation.
+
+**Example:**
+```python
+def onPrivateSay(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_PRIVATE_SAY',
+        'communicationType': 'PRIVATE',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'senderGuid': event.client.guid,
+        'senderName': str(event.client.name),
+        'recipientGuid': event.target.guid if event.target else None,
+        'recipientName': str(event.target.name) if event.target else None,
+        'message': str(event.data),
+        'messageLength': len(str(event.data))
+    }
+```
+
+---
+
+### EVT_CLIENT_RADIO
+
+**Event Type:** Communication  
+**Description:** Radio command issued by a player (game-specific feature for quick communication).
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.client': Client,      # Client object of player issuing command
+    'event.data': str            # Radio command identifier or text
+}
+```
+
+**Available Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- `client.team` - Player's team
+- `event.data` - Radio command identifier or text
+
+**Typical Usage:** Track use of radio commands, analyze communication patterns, monitor team coordination.
 
 **Note:** Game-specific feature, available in games with radio command systems.
 
-**Example Commands:** "Need backup", "Roger that", "Hold position"
+**Example:**
+```python
+def onRadio(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_RADIO',
+        'communicationType': 'RADIO',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'senderGuid': event.client.guid,
+        'senderName': str(event.client.name),
+        'senderTeam': event.client.team,
+        'radioCommand': str(event.data),
+        'radioCommandCategory': None  # Parse from event.data if structured
+    }
+```
 
 ---
 
-## Event Data Examples
+## Custom Plugin Events
 
-### Example 1: Player Connection Flow
+These are custom events specific to the portal plugin implementation for map voting functionality.
 
-A typical player session involves the following lifecycle events in sequence:
+### EVT_CLIENT_MAP_VOTE_LIKE
 
-1. **EVT_CLIENT_CONNECT** - Player establishes connection
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.name = "PlayerName"
-   event.client.ip = "192.168.1.100"
-   ```
+**Event Type:** Custom Plugin Event  
+**Description:** Custom event triggered when a player uses the `!like` command to vote positively for the current map.
 
-2. **EVT_CLIENT_AUTH** - Player authenticates
-   ```python
-   event.client.guid = "abc123def456"  # Confirmed GUID
-   event.client.name = "PlayerName"
-   ```
+**Event Data Structure:**
+```python
+{
+    'event.type': str,           # 'EVT_CLIENT_MAP_VOTE_LIKE'
+    'event.client': Client,      # Client object of voting player
+    'event.data': dict           # Vote details
+}
+```
 
-3. **EVT_CLIENT_JOIN** - Player joins game
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.team = 1  # Assigned to team 1
-   ```
+**Available Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- Current map name (from `self.console.game.mapName`)
 
-4. **EVT_CLIENT_DISCONNECT** - Player leaves
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.connections = 42  # Total connection count
-   ```
+**Trigger:** Player executes `!like` command in chat.
 
-### Example 2: Communication Flow
+**Typical Usage:** Track map popularity, generate map preference statistics, influence map rotation.
 
-Different types of communication events with sample data:
+**Current Implementation:**
+```python
+def cmd_like(self, data, client, _):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_MAP_VOTE_LIKE',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'playerGuid': client.guid,
+        'playerName': str(client.name),
+        'mapName': self.console.game.mapName,
+        'voteType': 'LIKE',
+        'like': True
+    }
+```
 
-1. **Public Chat (EVT_CLIENT_SAY)**
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.name = "PlayerName"
-   event.data = "Great shot!"
-   ```
+---
 
-2. **Team Chat (EVT_CLIENT_TEAM_SAY)**
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.name = "PlayerName"
-   event.client.team = 1
-   event.data = "Cover me, going for the flag"
-   ```
+### EVT_CLIENT_MAP_VOTE_DISLIKE
 
-3. **Private Message (EVT_CLIENT_PRIVATE_SAY)**
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.name = "PlayerName"
-   event.data = "Want to team up next round?"
-   ```
+**Event Type:** Custom Plugin Event  
+**Description:** Custom event triggered when a player uses the `!dislike` command to vote negatively for the current map.
 
-### Example 3: Player State Changes
+**Event Data Structure:**
+```python
+{
+    'event.type': str,           # 'EVT_CLIENT_MAP_VOTE_DISLIKE'
+    'event.client': Client,      # Client object of voting player
+    'event.data': dict           # Vote details
+}
+```
 
-1. **Name Change (EVT_CLIENT_NAME_CHANGE)**
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.name = "NewPlayerName"  # Updated name
-   event.data = "NewPlayerName"
-   ```
+**Available Properties:**
+- `client.guid` - Unique player identifier (GUID)
+- `client.name` - Player name
+- Current map name (from `self.console.game.mapName`)
 
-2. **Team Change (EVT_CLIENT_TEAM_CHANGE)**
-   ```python
-   event.client.guid = "abc123def456"
-   event.client.team = 2  # Switched to team 2
-   event.data = 2  # New team ID
-   ```
+**Trigger:** Player executes `!dislike` command in chat.
+
+**Typical Usage:** Track map unpopularity, identify problematic maps, adjust map rotation.
+
+**Current Implementation:**
+```python
+def cmd_dislike(self, data, client, _):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_CLIENT_MAP_VOTE_DISLIKE',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'playerGuid': client.guid,
+        'playerName': str(client.name),
+        'mapName': self.console.game.mapName,
+        'voteType': 'DISLIKE',
+        'like': False
+    }
+```
+
+---
+
+## Server and Game Events
+
+These events track server state, game flow, and match progression for administration portal features.
+
+### EVT_SERVER_STARTUP
+
+**Event Type:** Server Event  
+**Description:** Custom event triggered when the B3 bot connects to the game server and initializes.
+
+**Event Data Structure:**
+```python
+{
+    'event.type': str,           # 'EVT_SERVER_STARTUP'
+    'serverId': str,             # Server identifier
+    'gameType': str              # Game type
+}
+```
+
+**Available Properties:**
+- Server ID
+- Game type
+- Startup timestamp
+
+**Trigger:** Plugin initialization (`onStartup` method).
+
+**Typical Usage:** Track server uptime, monitor server restarts, initialize admin portal server status.
+
+**Current Implementation:**
+```python
+def onStartup(self):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_SERVER_STARTUP',
+        'serverId': self._serverId,
+        'gameType': self._gameType
+    }
+```
+
+---
+
+### EVT_GAME_MAP_CHANGE
+
+**Event Type:** Game Event  
+**Description:** Triggered when the server changes from one map to another.
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.data': dict           # Map change information
+}
+```
+
+**Available Properties:**
+- `event.data['new']` - New map name
+- `event.data['old']` - Previous map name (may be empty on first map)
+- `self.console.game.mapName` - Current map name
+- `self.console.game.gameName` - Game mode name
+
+**Typical Usage:** Track map rotation, monitor map changes for admin portal, enable map-specific configurations.
+
+**Admin Portal Usage:** Display current map, show map history, track map change frequency.
+
+**Example:**
+```python
+def onMapChange(self, event):
+    console = self.console.game
+    
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_GAME_MAP_CHANGE',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'previousMap': event.data.get('old', '') if isinstance(event.data, dict) else '',
+        'newMap': event.data.get('new', console.mapName) if isinstance(event.data, dict) else console.mapName,
+        'mapName': str(console.mapName),
+        'gameName': str(console.gameName) if console.gameName else ''
+    }
+```
+
+---
+
+### EVT_GAME_ROUND_START
+
+**Event Type:** Game Event  
+**Description:** Triggered when a new round starts in the game.
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.data': mixed          # Round information (game-specific)
+}
+```
+
+**Available Properties:**
+- `event.data` - Round number or round information (game-specific format)
+- Current map name (from `self.console.game.mapName`)
+- Current game mode (from `self.console.game.gameType`)
+
+**Typical Usage:** Track round progression, initialize round statistics, monitor game flow.
+
+**Admin Portal Usage:** Display "Round in Progress" status, show current round number, track round start times.
+
+**Example:**
+```python
+def onRoundStart(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_GAME_ROUND_START',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'mapName': self.console.game.mapName,
+        'roundInfo': str(event.data) if event.data else None
+    }
+```
+
+---
+
+### EVT_GAME_ROUND_END
+
+**Event Type:** Game Event  
+**Description:** Triggered when a round ends in the game.
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.data': mixed          # Round results (game-specific)
+}
+```
+
+**Available Properties:**
+- `event.data` - Round results, winning team, scores (game-specific format)
+- Current map name (from `self.console.game.mapName`)
+
+**Typical Usage:** Record round results, calculate statistics, determine winners.
+
+**Admin Portal Usage:** Display round end status, show round results, track round completion times.
+
+**Example:**
+```python
+def onRoundEnd(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_GAME_ROUND_END',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'mapName': self.console.game.mapName,
+        'roundResults': str(event.data) if event.data else None
+    }
+```
+
+---
+
+### EVT_GAME_EXIT
+
+**Event Type:** Game Event  
+**Description:** Triggered when the game/match ends completely (all rounds finished).
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.data': mixed          # Game end information (game-specific)
+}
+```
+
+**Available Properties:**
+- `event.data` - Match results, final scores (game-specific format)
+- Final map name
+- Match duration information
+
+**Typical Usage:** Record match completion, calculate final statistics, trigger map rotation.
+
+**Admin Portal Usage:** Display match end status, show final results, track match completion.
+
+**Example:**
+```python
+def onGameExit(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_GAME_EXIT',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'mapName': self.console.game.mapName,
+        'gameResults': str(event.data) if event.data else None
+    }
+```
+
+---
+
+### EVT_GAME_WARMUP
+
+**Event Type:** Game Event  
+**Description:** Triggered when the game enters warmup period (pre-match preparation phase).
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.data': mixed          # Warmup information (game-specific)
+}
+```
+
+**Available Properties:**
+- `event.data` - Warmup duration or settings (game-specific)
+- Current map name
+
+**Typical Usage:** Track warmup periods, display server status during warmup.
+
+**Admin Portal Usage:** Display "Warmup in Progress" status, show warmup timer if available.
+
+**Example:**
+```python
+def onWarmup(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_GAME_WARMUP',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'mapName': self.console.game.mapName,
+        'warmupInfo': str(event.data) if event.data else None
+    }
+```
+
+---
+
+### EVT_GAME_ROUND_PLAYER_SCORES
+
+**Event Type:** Game Event  
+**Description:** Triggered when player scores are updated during or after a round.
+
+**Event Data Structure:**
+```python
+{
+    'event.type': int,           # Event type ID
+    'event.data': mixed          # Score information (game-specific)
+}
+```
+
+**Available Properties:**
+- `event.data` - Player scores, rankings, statistics (game-specific format)
+- May contain multiple player score updates
+
+**Typical Usage:** Track player performance, update leaderboards, calculate statistics.
+
+**Admin Portal Usage:** Display live scoreboards, show historical score data, track player performance trends.
+
+**Example:**
+```python
+def onRoundPlayerScores(self, event):
+    eventData = {
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'eventType': 'EVT_GAME_ROUND_PLAYER_SCORES',
+        'gameType': self._gameType,
+        'serverId': self._serverId,
+        'mapName': self.console.game.mapName,
+        'scoreData': event.data  # May be structured or need parsing
+    }
+```
+
+---
+
+## Event Schema Summary
+
+### Common Event Schema
+
+All events should be stored with these common fields:
+
+```typescript
+interface BaseEvent {
+  eventId: string;                    // Unique UUID for this event
+  eventGeneratedUtc: string;          // ISO 8601 timestamp (UTC)
+  eventType: string;                  // Event type identifier
+  serverId: string;                   // Server identifier
+  gameType: string;                   // Game type (e.g., "cod4", "iourt43")
+}
+```
+
+### Player Event Schema
+
+Events involving players extend the base schema:
+
+```typescript
+interface PlayerEvent extends BaseEvent {
+  playerGuid: string;                 // Player GUID (primary identifier)
+  playerName: string;                 // Player name at time of event
+  playerIpAddress?: string;           // IP address (optional for privacy)
+  playerTeam?: string;                // Player team (if applicable)
+}
+```
+
+### Communication Event Schema
+
+Communication events have additional message fields:
+
+```typescript
+interface CommunicationEvent extends PlayerEvent {
+  communicationType: string;          // PUBLIC, TEAM, SQUAD, PRIVATE, RADIO
+  message: string;                    // Message text
+  messageLength: number;              // Message length in characters
+  recipientGuid?: string;             // For PRIVATE messages
+  recipientName?: string;             // For PRIVATE messages
+  targetTeam?: string;                // For TEAM messages
+  squadId?: string;                   // For SQUAD messages
+}
+```
+
+### Game Event Schema
+
+Game and server events track game state:
+
+```typescript
+interface GameEvent extends BaseEvent {
+  mapName?: string;                   // Current map name
+  gameName?: string;                  // Game mode name
+  roundInfo?: any;                    // Round-specific data
+  gameResults?: any;                  // Match results data
+  scoreData?: any;                    // Player score data
+}
+```
+
+## Event Type Enumerations
+
+### Player Lifecycle Event Types
+
+```typescript
+enum PlayerLifecycleEventType {
+  EVT_CLIENT_CONNECT = "EVT_CLIENT_CONNECT",
+  EVT_CLIENT_AUTH = "EVT_CLIENT_AUTH",
+  EVT_CLIENT_JOIN = "EVT_CLIENT_JOIN",
+  EVT_CLIENT_DISCONNECT = "EVT_CLIENT_DISCONNECT",
+  EVT_CLIENT_NAME_CHANGE = "EVT_CLIENT_NAME_CHANGE"
+}
+```
+
+### Communication Event Types
+
+```typescript
+enum CommunicationEventType {
+  EVT_CLIENT_SAY = "EVT_CLIENT_SAY",
+  EVT_CLIENT_TEAM_SAY = "EVT_CLIENT_TEAM_SAY",
+  EVT_CLIENT_SQUAD_SAY = "EVT_CLIENT_SQUAD_SAY",
+  EVT_CLIENT_PRIVATE_SAY = "EVT_CLIENT_PRIVATE_SAY",
+  EVT_CLIENT_RADIO = "EVT_CLIENT_RADIO"
+}
+```
+
+### Communication Types
+
+```typescript
+enum CommunicationType {
+  PUBLIC = "PUBLIC",
+  TEAM = "TEAM",
+  SQUAD = "SQUAD",
+  PRIVATE = "PRIVATE",
+  RADIO = "RADIO"
+}
+```
+
+### Custom Plugin Event Types
+
+```typescript
+enum CustomEventType {
+  EVT_CLIENT_MAP_VOTE_LIKE = "EVT_CLIENT_MAP_VOTE_LIKE",
+  EVT_CLIENT_MAP_VOTE_DISLIKE = "EVT_CLIENT_MAP_VOTE_DISLIKE"
+}
+```
+
+### Server and Game Event Types
+
+```typescript
+enum ServerGameEventType {
+  EVT_SERVER_STARTUP = "EVT_SERVER_STARTUP",
+  EVT_GAME_MAP_CHANGE = "EVT_GAME_MAP_CHANGE",
+  EVT_GAME_ROUND_START = "EVT_GAME_ROUND_START",
+  EVT_GAME_ROUND_END = "EVT_GAME_ROUND_END",
+  EVT_GAME_EXIT = "EVT_GAME_EXIT",
+  EVT_GAME_WARMUP = "EVT_GAME_WARMUP",
+  EVT_GAME_ROUND_PLAYER_SCORES = "EVT_GAME_ROUND_PLAYER_SCORES"
+}
+```
+
+### Game Types
+
+```typescript
+enum GameType {
+  COD4 = "cod4",
+  IOURT41 = "iourt41",
+  IOURT42 = "iourt42",
+  IOURT43 = "iourt43",
+  BF3 = "bf3",
+  BFBC2 = "bfbc2",
+  MOH = "moh",
+  COD7 = "cod7"
+}
+```
 
 ## Implementation Notes
 
+### Event Registration
+
+To capture these events in the portal plugin, register them in the `onStartup` method:
+
+```python
+def onStartup(self):
+    # Player lifecycle events
+    self.registerEvent('EVT_CLIENT_CONNECT', self.onConnect)
+    self.registerEvent('EVT_CLIENT_AUTH', self.onAuth)
+    self.registerEvent('EVT_CLIENT_JOIN', self.onJoin)
+    self.registerEvent('EVT_CLIENT_DISCONNECT', self.onDisconnect)
+    self.registerEvent('EVT_CLIENT_NAME_CHANGE', self.onNameChange)
+    
+    # Communication events
+    self.registerEvent('EVT_CLIENT_SAY', self.onSay)
+    self.registerEvent('EVT_CLIENT_TEAM_SAY', self.onTeamSay)
+    if self.console.getEventID('EVT_CLIENT_SQUAD_SAY'):
+        self.registerEvent('EVT_CLIENT_SQUAD_SAY', self.onSquadSay)
+    self.registerEvent('EVT_CLIENT_PRIVATE_SAY', self.onPrivateSay)
+    if self.console.getEventID('EVT_CLIENT_RADIO'):
+        self.registerEvent('EVT_CLIENT_RADIO', self.onRadio)
+    
+    # Game events
+    self.registerEvent('EVT_GAME_MAP_CHANGE', self.onMapChange)
+    self.registerEvent('EVT_GAME_ROUND_START', self.onRoundStart)
+    self.registerEvent('EVT_GAME_ROUND_END', self.onRoundEnd)
+    self.registerEvent('EVT_GAME_EXIT', self.onGameExit)
+    self.registerEvent('EVT_GAME_WARMUP', self.onWarmup)
+    if self.console.getEventID('EVT_GAME_ROUND_PLAYER_SCORES'):
+        self.registerEvent('EVT_GAME_ROUND_PLAYER_SCORES', self.onRoundPlayerScores)
+```
+
 ### Event Availability
 
-- **Connection Events** (CONNECT, AUTH, JOIN, DISCONNECT) are available in all B3 configurations
-- **Chat Events** (SAY, TEAM_SAY) are available in all games
-- **SQUAD_SAY** is only available in games with squad mechanics (e.g., Battlefield 3, BFBC2)
-- **RADIO** events are game-specific and may not be available in all configurations
+- **All Games:** CONNECT, AUTH, JOIN, DISCONNECT, NAME_CHANGE, SAY, TEAM_SAY, MAP_CHANGE
+- **Squad-Based Games:** SQUAD_SAY (Battlefield 3, BFBC2, etc.)
+- **Radio Systems:** RADIO (Urban Terror, Call of Duty series)
+- **Round-Based Games:** ROUND_START, ROUND_END, ROUND_PLAYER_SCORES
+- **All Games with Matches:** GAME_EXIT, GAME_WARMUP
 
-### Event Order
+### Admin Portal Integration
 
-Player lifecycle events typically occur in this order:
-1. `EVT_CLIENT_CONNECT` (initial connection)
-2. `EVT_CLIENT_AUTH` (authentication)
-3. `EVT_CLIENT_JOIN` (joins game)
-4. Multiple gameplay and communication events
-5. `EVT_CLIENT_DISCONNECT` (leaves server)
+The game events are specifically designed to support admin portal features:
+
+1. **Current Server Status:**
+   - EVT_SERVER_STARTUP - Server online indicator
+   - EVT_GAME_MAP_CHANGE - Display current map
+   - EVT_GAME_WARMUP - Show "Warmup in Progress"
+   - EVT_GAME_ROUND_START - Show "Round X in Progress"
+
+2. **Historical Views:**
+   - EVT_GAME_MAP_CHANGE - Map rotation history
+   - EVT_GAME_ROUND_END - Round completion history
+   - EVT_GAME_ROUND_PLAYER_SCORES - Player performance over time
+
+3. **Real-Time Monitoring:**
+   - Player connections/disconnections
+   - Active communication monitoring
+   - Live game progression tracking
 
 ### Data Validation
 
-When capturing these events, consider:
+When implementing the repository API, consider:
 
-- **GUID** is the primary player identifier and should always be present
-- **Player name** may change during a session (EVT_CLIENT_NAME_CHANGE)
-- **IP address** may be null or masked for privacy compliance
-- **Message text** should be stored as-is for audit purposes, apply filtering at display time
-- **Team identifiers** are game-specific (may be integers, strings, or enums)
+- **Required Fields:** eventId, eventGeneratedUtc, eventType, serverId, gameType
+- **Player Identification:** playerGuid is the primary identifier (never null for player events)
+- **Message Content:** Store raw message text, apply filtering at display time
+- **Timestamps:** Always UTC in ISO 8601 format
+- **Game-Specific Data:** Use flexible fields (JSON/JSONB) for event.data variations
 
-### Message Characteristics
-
-Communication events typically have these characteristics:
-
-- **Message length:** Generally 1-1000 characters (game-specific limits)
-- **Encoding:** UTF-8 text
-- **Special characters:** May include game-specific color codes or formatting
-- **Frequency:** High volume - public chat can generate hundreds of events per hour on busy servers
-
-## Current Portal Plugin Implementation
-
-The existing portal plugin currently captures a subset of these events:
-
-| Event | Currently Captured | Endpoint |
-|-------|-------------------|----------|
-| EVT_CLIENT_CONNECT | ✅ Yes | `/OnPlayerConnected` |
-| EVT_CLIENT_AUTH | ❌ No | - |
-| EVT_CLIENT_JOIN | ❌ No | - |
-| EVT_CLIENT_DISCONNECT | ❌ No | - |
-| EVT_CLIENT_NAME_CHANGE | ❌ No | - |
-| EVT_CLIENT_TEAM_CHANGE | ❌ No | - |
-| EVT_CLIENT_SAY | ✅ Yes | `/OnChatMessage` (type: 'All') |
-| EVT_CLIENT_TEAM_SAY | ✅ Yes | `/OnChatMessage` (type: 'Team') |
-| EVT_CLIENT_SQUAD_SAY | ❌ No | - |
-| EVT_CLIENT_PRIVATE_SAY | ❌ No | - |
-| EVT_CLIENT_RADIO | ❌ No | - |
-
-### Current Data Format
-
-**Player Connected:**
-```python
-{
-    'eventGeneratedUtc': timestamp,
-    'gameType': str,
-    'serverId': str,
-    'username': str,
-    'guid': str,
-    'ipAddress': str
-}
-```
-
-**Chat Message:**
-```python
-{
-    'eventGeneratedUtc': timestamp,
-    'gameType': str,
-    'serverId': str,
-    'username': str,
-    'guid': str,
-    'message': str,
-    'type': 'All' | 'Team'
-}
-```
-
-## Expansion Opportunities
-
-To provide comprehensive player and communication tracking, consider adding support for:
-
-### High Priority
-1. **EVT_CLIENT_DISCONNECT** - Essential for session tracking and analytics
-2. **EVT_CLIENT_NAME_CHANGE** - Important for player identity audit trail
-3. **EVT_CLIENT_PRIVATE_SAY** - Critical for moderation and harassment detection
-4. **EVT_CLIENT_AUTH** and **EVT_CLIENT_JOIN** - Useful for detailed connection flow analysis
-
-### Medium Priority
-5. **EVT_CLIENT_TEAM_CHANGE** - Useful for team balance analytics
-6. **EVT_CLIENT_SQUAD_SAY** - Valuable for Battlefield-specific deployments
-7. **EVT_CLIENT_RADIO** - Interesting for communication pattern analysis in supported games
-
-### Recommended Data Fields
-
-For each captured event, consider storing:
-
-**Common Fields (all events):**
-- Event ID (UUID)
-- Event Type (enum/string)
-- Event Generated Timestamp (UTC)
-- Server ID
-- Game Type
-
-**Player Identification:**
-- Player GUID (primary identifier)
-- Player Name (at time of event)
-- Player IP Address (optional, privacy consideration)
-- Player Team (for context)
-
-**Event-Specific Data:**
-- Message text (for communication events)
-- Previous/new values (for state change events)
-- Session duration (for disconnect events)
-- Connection count (for disconnect events)
-
-**Metadata:**
-- Extensible metadata field (JSON/JSONB) for game-specific additional data
