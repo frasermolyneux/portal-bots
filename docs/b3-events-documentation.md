@@ -12,6 +12,10 @@ This document provides comprehensive documentation of the B3 (BigBrotherBot) eve
   - [Admin and Plugin Events](#admin-and-plugin-events)
   - [Game-Specific Events](#game-specific-events)
 - [Event Data Properties](#event-data-properties)
+- [Proposed Event Schemas](#proposed-event-schemas)
+  - [Client Lifecycle Events Schema](#client-lifecycle-events-schema)
+  - [Communication Events Schema](#communication-events-schema)
+  - [Common Enumerations](#common-enumerations)
 - [Key Findings](#key-findings)
   - [Server Broadcast Messages](#server-broadcast-messages)
   - [RCON Command Execution](#rcon-command-execution)
@@ -309,6 +313,447 @@ When `event.client` or `event.target` is present, these client objects contain:
 - `client.maxLevel` - Admin level
 - `client.connections` - Number of connections
 - Additional properties depending on game and plugins loaded
+
+## Proposed Event Schemas
+
+This section defines the data schemas for client lifecycle and communication events that should be captured and stored by the portal API. These schemas are designed to be used by the repository layer for creating data structures for storage.
+
+### Client Lifecycle Events Schema
+
+Client lifecycle events track player connection states throughout their session on the server.
+
+#### Base Lifecycle Event Schema
+
+All lifecycle events share a common base schema:
+
+```typescript
+interface BaseLifecycleEvent {
+  // Event metadata
+  eventId: string;                    // Unique identifier for this event (UUID)
+  eventType: LifecycleEventType;      // Type of lifecycle event (enum)
+  eventGeneratedUtc: DateTime;        // UTC timestamp when event was generated
+  
+  // Server context
+  serverId: string;                   // Unique server identifier
+  gameType: string;                   // Game type (e.g., "cod4", "iourt43", "bf3")
+  
+  // Player information
+  playerGuid: string;                 // Unique player identifier (GUID)
+  playerName: string;                 // Player username/nickname at time of event
+  playerIpAddress: string | null;     // Player IP address (nullable for privacy)
+  
+  // Additional context
+  metadata: Record<string, any> | null; // Extensible metadata for game-specific data
+}
+```
+
+#### Lifecycle Event Types (Enum)
+
+```typescript
+enum LifecycleEventType {
+  CONNECT = "CONNECT",           // Initial connection to server (EVT_CLIENT_CONNECT)
+  AUTH = "AUTH",                 // Player authenticated (EVT_CLIENT_AUTH)
+  JOIN = "JOIN",                 // Player joined game (EVT_CLIENT_JOIN)
+  DISCONNECT = "DISCONNECT",     // Player disconnected (EVT_CLIENT_DISCONNECT)
+  NAME_CHANGE = "NAME_CHANGE",   // Player changed name (EVT_CLIENT_NAME_CHANGE)
+  TEAM_CHANGE = "TEAM_CHANGE"    // Player changed team (EVT_CLIENT_TEAM_CHANGE)
+}
+```
+
+#### Specific Lifecycle Event Schemas
+
+**Player Connect Event:**
+```typescript
+interface PlayerConnectEvent extends BaseLifecycleEvent {
+  eventType: LifecycleEventType.CONNECT;
+  
+  // Additional connect-specific fields
+  connectionNumber: number | null;    // Number of times player has connected to this server
+}
+```
+
+**Player Disconnect Event:**
+```typescript
+interface PlayerDisconnectEvent extends BaseLifecycleEvent {
+  eventType: LifecycleEventType.DISCONNECT;
+  
+  // Additional disconnect-specific fields
+  sessionDurationSeconds: number | null; // Duration of player's session in seconds
+  disconnectReason: DisconnectReason | null; // Reason for disconnect (enum)
+}
+```
+
+**Player Name Change Event:**
+```typescript
+interface PlayerNameChangeEvent extends BaseLifecycleEvent {
+  eventType: LifecycleEventType.NAME_CHANGE;
+  
+  // Name change specific fields
+  previousName: string;               // Player's previous name
+  newName: string;                    // Player's new name (same as playerName)
+}
+```
+
+**Player Team Change Event:**
+```typescript
+interface PlayerTeamChangeEvent extends BaseLifecycleEvent {
+  eventType: LifecycleEventType.TEAM_CHANGE;
+  
+  // Team change specific fields
+  previousTeam: TeamIdentifier | null; // Previous team
+  newTeam: TeamIdentifier;             // New team
+}
+```
+
+#### Supporting Enums for Lifecycle Events
+
+**Disconnect Reason:**
+```typescript
+enum DisconnectReason {
+  NORMAL = "NORMAL",                 // Normal disconnect
+  KICKED = "KICKED",                 // Kicked by admin
+  BANNED = "BANNED",                 // Banned from server
+  TIMEOUT = "TIMEOUT",               // Connection timeout
+  ERROR = "ERROR",                   // Connection error
+  UNKNOWN = "UNKNOWN"                // Unknown reason
+}
+```
+
+**Team Identifier:**
+```typescript
+enum TeamIdentifier {
+  SPECTATOR = "SPECTATOR",           // Spectator/observer
+  TEAM_1 = "TEAM_1",                 // Team 1 (e.g., Red, Allies, US)
+  TEAM_2 = "TEAM_2",                 // Team 2 (e.g., Blue, Axis, RU)
+  TEAM_3 = "TEAM_3",                 // Team 3 (game-specific)
+  TEAM_4 = "TEAM_4",                 // Team 4 (game-specific)
+  FREE_FOR_ALL = "FREE_FOR_ALL",     // No team (FFA mode)
+  UNKNOWN = "UNKNOWN"                // Unknown team
+}
+```
+
+### Communication Events Schema
+
+Communication events capture all player messages and chat interactions on the server.
+
+#### Base Communication Event Schema
+
+All communication events share a common base schema:
+
+```typescript
+interface BaseCommunicationEvent {
+  // Event metadata
+  eventId: string;                    // Unique identifier for this event (UUID)
+  eventType: "COMMUNICATION";         // Always "COMMUNICATION" for these events
+  communicationType: CommunicationType; // Type of communication (enum)
+  eventGeneratedUtc: DateTime;        // UTC timestamp when event was generated
+  
+  // Server context
+  serverId: string;                   // Unique server identifier
+  gameType: string;                   // Game type (e.g., "cod4", "iourt43", "bf3")
+  
+  // Sender information
+  senderGuid: string;                 // Unique player identifier (GUID) of sender
+  senderName: string;                 // Sender username/nickname
+  senderTeam: TeamIdentifier | null;  // Sender's team at time of message
+  
+  // Message content
+  message: string;                    // The actual message text
+  messageLength: number;              // Length of message in characters
+  
+  // Additional context
+  metadata: Record<string, any> | null; // Extensible metadata for game-specific data
+}
+```
+
+#### Communication Types (Enum)
+
+```typescript
+enum CommunicationType {
+  PUBLIC = "PUBLIC",                 // Public chat to all players (EVT_CLIENT_SAY)
+  TEAM = "TEAM",                     // Team-only chat (EVT_CLIENT_TEAM_SAY)
+  SQUAD = "SQUAD",                   // Squad-only chat (EVT_CLIENT_SQUAD_SAY)
+  PRIVATE = "PRIVATE",               // Private message/whisper (EVT_CLIENT_PRIVATE_SAY)
+  RADIO = "RADIO",                   // Radio command (EVT_CLIENT_RADIO)
+  ADMIN = "ADMIN"                    // Admin command/chat
+}
+```
+
+#### Specific Communication Event Schemas
+
+**Public Chat Event:**
+```typescript
+interface PublicChatEvent extends BaseCommunicationEvent {
+  communicationType: CommunicationType.PUBLIC;
+  
+  // No additional fields - message is visible to all players
+}
+```
+
+**Team Chat Event:**
+```typescript
+interface TeamChatEvent extends BaseCommunicationEvent {
+  communicationType: CommunicationType.TEAM;
+  
+  // Team chat specific fields
+  targetTeam: TeamIdentifier;         // Team that can see this message
+}
+```
+
+**Squad Chat Event:**
+```typescript
+interface SquadChatEvent extends BaseCommunicationEvent {
+  communicationType: CommunicationType.SQUAD;
+  
+  // Squad chat specific fields
+  squadId: string | null;             // Squad identifier (game-specific)
+}
+```
+
+**Private Message Event:**
+```typescript
+interface PrivateMessageEvent extends BaseCommunicationEvent {
+  communicationType: CommunicationType.PRIVATE;
+  
+  // Private message specific fields
+  recipientGuid: string;              // Unique player identifier (GUID) of recipient
+  recipientName: string;              // Recipient username/nickname
+}
+```
+
+**Radio Command Event:**
+```typescript
+interface RadioCommandEvent extends BaseCommunicationEvent {
+  communicationType: CommunicationType.RADIO;
+  
+  // Radio command specific fields
+  radioCommand: string;               // Radio command identifier (game-specific)
+  radioCommandCategory: string | null; // Command category (e.g., "orders", "responses")
+}
+```
+
+#### Supporting Types for Communication Events
+
+**Message Validation:**
+```typescript
+interface MessageValidation {
+  isValid: boolean;                   // Whether message passes validation
+  containsProfanity: boolean;         // Whether message contains filtered words
+  isSpam: boolean;                    // Whether message is considered spam
+  violationType: string | null;       // Type of violation if any
+}
+```
+
+### Common Enumerations
+
+These enumerations are used across multiple event types:
+
+#### Game Types
+
+Common game type identifiers:
+
+```typescript
+enum GameType {
+  COD4 = "cod4",                     // Call of Duty 4
+  IOURT41 = "iourt41",               // Urban Terror 4.1
+  IOURT42 = "iourt42",               // Urban Terror 4.2
+  IOURT43 = "iourt43",               // Urban Terror 4.3
+  BF3 = "bf3",                       // Battlefield 3
+  BFBC2 = "bfbc2",                   // Battlefield Bad Company 2
+  MOH = "moh",                       // Medal of Honor
+  COD7 = "cod7",                     // Call of Duty: Black Ops
+  CUSTOM = "custom"                  // Custom/other game type
+}
+```
+
+### Schema Implementation Examples
+
+#### Example 1: Storing a Player Connect Event
+
+```python
+def onConnect(self, event):
+    """Handle EVT_CLIENT_CONNECT"""
+    
+    lifecycle_event = {
+        'eventId': str(uuid.uuid4()),
+        'eventType': 'CONNECT',
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'serverId': self._serverId,
+        'gameType': self._gameType,
+        'playerGuid': event.client.guid,
+        'playerName': str(event.client.name),
+        'playerIpAddress': event.client.ip,
+        'connectionNumber': event.client.connections if hasattr(event.client, 'connections') else None,
+        'metadata': None
+    }
+    
+    self._postEvent(self._apimUrlBase + '/lifecycle-events', lifecycle_event)
+```
+
+#### Example 2: Storing a Communication Event
+
+```python
+def onSay(self, event):
+    """Handle EVT_CLIENT_SAY (public chat)"""
+    
+    communication_event = {
+        'eventId': str(uuid.uuid4()),
+        'eventType': 'COMMUNICATION',
+        'communicationType': 'PUBLIC',
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'serverId': self._serverId,
+        'gameType': self._gameType,
+        'senderGuid': event.client.guid,
+        'senderName': str(event.client.name),
+        'senderTeam': self._mapTeamToIdentifier(event.client.team),
+        'message': str(event.data),
+        'messageLength': len(str(event.data)),
+        'metadata': None
+    }
+    
+    self._postEvent(self._apimUrlBase + '/communication-events', communication_event)
+```
+
+#### Example 3: Storing a Team Chat Event
+
+```python
+def onTeamSay(self, event):
+    """Handle EVT_CLIENT_TEAM_SAY"""
+    
+    communication_event = {
+        'eventId': str(uuid.uuid4()),
+        'eventType': 'COMMUNICATION',
+        'communicationType': 'TEAM',
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'serverId': self._serverId,
+        'gameType': self._gameType,
+        'senderGuid': event.client.guid,
+        'senderName': str(event.client.name),
+        'senderTeam': self._mapTeamToIdentifier(event.client.team),
+        'targetTeam': self._mapTeamToIdentifier(event.client.team),
+        'message': str(event.data),
+        'messageLength': len(str(event.data)),
+        'metadata': None
+    }
+    
+    self._postEvent(self._apimUrlBase + '/communication-events', communication_event)
+```
+
+#### Example 4: Storing a Player Disconnect Event
+
+```python
+def onDisconnect(self, event):
+    """Handle EVT_CLIENT_DISCONNECT"""
+    
+    session_duration = None
+    if hasattr(event.client, 'timeAdd') and event.client.timeAdd:
+        session_duration = int(self.console.time() - event.client.timeAdd)
+    
+    lifecycle_event = {
+        'eventId': str(uuid.uuid4()),
+        'eventType': 'DISCONNECT',
+        'eventGeneratedUtc': datetime.utcnow().isoformat(),
+        'serverId': self._serverId,
+        'gameType': self._gameType,
+        'playerGuid': event.client.guid,
+        'playerName': str(event.client.name),
+        'playerIpAddress': event.client.ip,
+        'sessionDurationSeconds': session_duration,
+        'disconnectReason': 'NORMAL',  # Could be enhanced with actual reason detection
+        'metadata': None
+    }
+    
+    self._postEvent(self._apimUrlBase + '/lifecycle-events', lifecycle_event)
+```
+
+### Database Schema Recommendations
+
+For the repository layer, consider these table structures:
+
+#### Client Lifecycle Events Table
+
+```sql
+CREATE TABLE client_lifecycle_events (
+    event_id UUID PRIMARY KEY,
+    event_type VARCHAR(20) NOT NULL,  -- Enum: CONNECT, AUTH, JOIN, DISCONNECT, NAME_CHANGE, TEAM_CHANGE
+    event_generated_utc TIMESTAMP NOT NULL,
+    server_id VARCHAR(100) NOT NULL,
+    game_type VARCHAR(20) NOT NULL,
+    player_guid VARCHAR(100) NOT NULL,
+    player_name VARCHAR(100) NOT NULL,
+    player_ip_address VARCHAR(45),    -- IPv4 or IPv6
+    connection_number INTEGER,
+    session_duration_seconds INTEGER,
+    disconnect_reason VARCHAR(20),    -- Enum: NORMAL, KICKED, BANNED, TIMEOUT, ERROR, UNKNOWN
+    previous_name VARCHAR(100),
+    new_name VARCHAR(100),
+    previous_team VARCHAR(20),        -- Enum: SPECTATOR, TEAM_1, TEAM_2, etc.
+    new_team VARCHAR(20),             -- Enum: SPECTATOR, TEAM_1, TEAM_2, etc.
+    metadata JSONB,                   -- Flexible metadata storage
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_player_guid (player_guid),
+    INDEX idx_server_id (server_id),
+    INDEX idx_event_type (event_type),
+    INDEX idx_event_generated_utc (event_generated_utc)
+);
+```
+
+#### Communication Events Table
+
+```sql
+CREATE TABLE communication_events (
+    event_id UUID PRIMARY KEY,
+    event_type VARCHAR(20) NOT NULL,  -- Always 'COMMUNICATION'
+    communication_type VARCHAR(20) NOT NULL, -- Enum: PUBLIC, TEAM, SQUAD, PRIVATE, RADIO, ADMIN
+    event_generated_utc TIMESTAMP NOT NULL,
+    server_id VARCHAR(100) NOT NULL,
+    game_type VARCHAR(20) NOT NULL,
+    sender_guid VARCHAR(100) NOT NULL,
+    sender_name VARCHAR(100) NOT NULL,
+    sender_team VARCHAR(20),          -- Enum: SPECTATOR, TEAM_1, TEAM_2, etc.
+    message TEXT NOT NULL,
+    message_length INTEGER NOT NULL,
+    target_team VARCHAR(20),          -- For team chat
+    recipient_guid VARCHAR(100),      -- For private messages
+    recipient_name VARCHAR(100),      -- For private messages
+    squad_id VARCHAR(50),             -- For squad chat
+    radio_command VARCHAR(50),        -- For radio commands
+    radio_command_category VARCHAR(50), -- For radio commands
+    metadata JSONB,                   -- Flexible metadata storage
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_sender_guid (sender_guid),
+    INDEX idx_server_id (server_id),
+    INDEX idx_communication_type (communication_type),
+    INDEX idx_event_generated_utc (event_generated_utc),
+    FULLTEXT INDEX idx_message (message)  -- For message search
+);
+```
+
+### Schema Validation Rules
+
+1. **Required Fields:**
+   - All `eventId`, `eventType`, `eventGeneratedUtc`, `serverId`, `gameType` are mandatory
+   - Player identifiers (`playerGuid`/`senderGuid`) are mandatory
+   - Message content is mandatory for communication events
+
+2. **Data Type Constraints:**
+   - `eventId` must be a valid UUID
+   - `eventGeneratedUtc` must be ISO 8601 format with UTC timezone
+   - `playerGuid`/`senderGuid` must be non-empty strings
+   - Enum values must match predefined values exactly (case-sensitive)
+
+3. **Length Constraints:**
+   - `playerName`/`senderName`: 1-100 characters
+   - `message`: 1-1000 characters (configurable)
+   - `serverId`: 1-100 characters
+   - `gameType`: 1-20 characters
+
+4. **Optional Fields:**
+   - `playerIpAddress` may be null for privacy compliance
+   - `metadata` may be null or contain game-specific additional data
+   - Context-specific fields (like `recipientGuid`, `squadId`) are nullable
 
 ## Key Findings
 
