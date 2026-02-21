@@ -14,16 +14,43 @@ concurrency:
   group: ${{ github.workflow }}
 
 jobs:
+  detect-changes:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.changes.outputs.src }}
+      terraform: ${{ steps.changes.outputs.terraform }}
+    steps:
+      - id: changes
+        uses: frasermolyneux/actions/detect-changes@main
+        with:
+          filters: |
+            src:src/**
+            terraform:terraform/**
+
   terraform-plan-and-apply-dev:
     permissions:
       contents: read
       id-token: write
     environment: Development
+    needs:
+      - detect-changes
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.repository }}-dev
     steps:
-      - uses: frasermolyneux/actions/terraform-plan-and-apply@main
+      - if: needs.detect-changes.outputs.terraform == 'true'
+        uses: frasermolyneux/actions/terraform-plan-and-apply@terraform-plan-and-apply/v1.4
+        with:
+          terraform-folder: "terraform"
+          terraform-var-file: "tfvars/dev.tfvars"
+          terraform-backend-file: "backends/dev.backend.hcl"
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - if: needs.detect-changes.outputs.terraform != 'true'
+        uses: frasermolyneux/actions/terraform-output@terraform-output/v1.0
         with:
           terraform-folder: "terraform"
           terraform-var-file: "tfvars/dev.tfvars"
@@ -37,12 +64,26 @@ jobs:
       contents: read
       id-token: write
     environment: Production
-    needs: terraform-plan-and-apply-dev
+    needs:
+      - detect-changes
+      - terraform-plan-and-apply-dev
+    if: |
+      !failure() && !cancelled() && needs.terraform-plan-and-apply-dev.result == 'success'
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.repository }}-prd
     steps:
-      - uses: frasermolyneux/actions/terraform-plan-and-apply@main
+      - if: needs.detect-changes.outputs.terraform == 'true'
+        uses: frasermolyneux/actions/terraform-plan-and-apply@terraform-plan-and-apply/v1.4
+        with:
+          terraform-folder: "terraform"
+          terraform-var-file: "tfvars/prd.tfvars"
+          terraform-backend-file: "backends/prd.backend.hcl"
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - if: needs.detect-changes.outputs.terraform != 'true'
+        uses: frasermolyneux/actions/terraform-output@terraform-output/v1.0
         with:
           terraform-folder: "terraform"
           terraform-var-file: "tfvars/prd.tfvars"
