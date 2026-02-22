@@ -30,6 +30,7 @@ jobs:
             terraform:terraform/**
 
   terraform-plan-and-apply-dev:
+    if: github.event_name != 'schedule'
     permissions:
       contents: read
       id-token: write
@@ -68,7 +69,7 @@ jobs:
       - detect-changes
       - terraform-plan-and-apply-dev
     if: |
-      !failure() && !cancelled() && needs.terraform-plan-and-apply-dev.result == 'success'
+      !failure() && !cancelled() && (needs.terraform-plan-and-apply-dev.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.repository }}-prd
