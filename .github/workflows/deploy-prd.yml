@@ -73,6 +73,14 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.repository }}-prd
+    outputs:
+      client_app_id: ${{ steps.terraform-output.outputs.client_app_id }}
+      client_app_secret: ${{ steps.terraform-output.outputs.client_app_secret }}
+      repository_api_audience: ${{ steps.terraform-output.outputs.repository_api_audience }}
+      event_ingest_api_audience: ${{ steps.terraform-output.outputs.event_ingest_api_audience }}
+      mysql_connection_string: ${{ steps.terraform-output.outputs.mysql_connection_string }}
+      repository_api_base_url: ${{ steps.terraform-output.outputs.repository_api_base_url }}
+      event_ingest_api_base_url: ${{ steps.terraform-output.outputs.event_ingest_api_base_url }}
     steps:
       - if: needs.detect-changes.outputs.terraform == 'true'
         uses: frasermolyneux/actions/terraform-plan-and-apply@terraform-plan-and-apply/v1.4
@@ -92,3 +100,52 @@ jobs:
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform (no wrapper)
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Extract terraform outputs
+        id: terraform-output
+        run: |
+          outputs=$(terraform -chdir=terraform output -json)
+
+          client_app_secret=$(echo "$outputs" | jq -r '.client_app_secret.value')
+          mysql_connection_string=$(echo "$outputs" | jq -r '.mysql_connection_string.value')
+          echo "::add-mask::$client_app_secret"
+          echo "::add-mask::$mysql_connection_string"
+
+          echo "client_app_id=$(echo "$outputs" | jq -r '.client_app_id.value')" >> $GITHUB_OUTPUT
+          echo "client_app_secret=$client_app_secret" >> $GITHUB_OUTPUT
+          echo "repository_api_audience=$(echo "$outputs" | jq -r '.repository_api_audience.value')" >> $GITHUB_OUTPUT
+          echo "event_ingest_api_audience=$(echo "$outputs" | jq -r '.event_ingest_api_audience.value')" >> $GITHUB_OUTPUT
+          echo "mysql_connection_string=$mysql_connection_string" >> $GITHUB_OUTPUT
+          echo "repository_api_base_url=$(echo "$outputs" | jq -r '.repository_api_base_url.value')" >> $GITHUB_OUTPUT
+          echo "event_ingest_api_base_url=$(echo "$outputs" | jq -r '.event_ingest_api_base_url.value')" >> $GITHUB_OUTPUT
+
+  deploy-to-vm:
+    needs:
+      - terraform-plan-and-apply-prd
+    runs-on: [self-hosted, windows]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Deploy bot environment
+        shell: pwsh
+        run: |
+          $params = @{
+            sourceWorkingDirectory         = "${{ github.workspace }}"
+            environment                    = "prd"
+            clientAppId                    = "${{ needs.terraform-plan-and-apply-prd.outputs.client_app_id }}"
+            clientAppSecret                = "${{ needs.terraform-plan-and-apply-prd.outputs.client_app_secret }}"
+            repositoryApplicationAudience  = "${{ needs.terraform-plan-and-apply-prd.outputs.repository_api_audience }}"
+            eventIngestApplicationAudience = "${{ needs.terraform-plan-and-apply-prd.outputs.event_ingest_api_audience }}"
+            mysqlConnectionString          = "${{ needs.terraform-plan-and-apply-prd.outputs.mysql_connection_string }}"
+            repositoryApiBaseUrl           = "${{ needs.terraform-plan-and-apply-prd.outputs.repository_api_base_url }}"
+            eventIngestApiBaseUrl          = "${{ needs.terraform-plan-and-apply-prd.outputs.event_ingest_api_base_url }}"
+          }
+
+          & "scripts/Deploy-BotEnvironment.ps1" @params
