@@ -108,8 +108,10 @@ jobs:
 
       - name: Extract terraform outputs
         id: terraform-output
+        shell: bash
         run: |
-          outputs=$(terraform -chdir=terraform output -json)
+          cd terraform
+          outputs=$(terraform output -json)
 
           client_app_secret=$(echo "$outputs" | jq -r '.client_app_secret.value')
           mysql_connection_string=$(echo "$outputs" | jq -r '.mysql_connection_string.value')
@@ -123,6 +125,12 @@ jobs:
           echo "mysql_connection_string=$mysql_connection_string" >> $GITHUB_OUTPUT
           echo "repository_api_base_url=$(echo "$outputs" | jq -r '.repository_api_base_url.value')" >> $GITHUB_OUTPUT
           echo "event_ingest_api_base_url=$(echo "$outputs" | jq -r '.event_ingest_api_base_url.value')" >> $GITHUB_OUTPUT
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_USE_AZUREAD: true
+          ARM_USE_OIDC: true
 
   deploy-to-vm:
     needs:
