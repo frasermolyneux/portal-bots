@@ -1,6 +1,6 @@
 workload_name = "portal-bots"
 environment   = "dev"
-location      = "uksouth"
+location      = "swedencentral"
 
 subscription_id = "d68448b0-9947-46d7-8771-baa331a3063a"
 
