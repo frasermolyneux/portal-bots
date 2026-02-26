@@ -130,21 +130,19 @@ jobs:
           cd terraform
           $outputs = terraform output -json | ConvertFrom-Json
 
-          $env:CLIENT_APP_ID = $outputs.client_app_id.value
-          $env:CLIENT_APP_SECRET = $outputs.client_app_secret.value
-          $env:REPOSITORY_API_AUDIENCE = $outputs.repository_api_audience.value
-          $env:EVENT_INGEST_API_AUDIENCE = $outputs.event_ingest_api_audience.value
-          $env:MYSQL_CONNECTION_STRING = $outputs.mysql_connection_string.value
-          $env:REPOSITORY_API_BASE_URL = $outputs.repository_api_base_url.value
-          $env:EVENT_INGEST_API_BASE_URL = $outputs.event_ingest_api_base_url.value
+          $clientAppSecret = $outputs.client_app_secret.value
+          $mysqlConnectionString = $outputs.mysql_connection_string.value
 
-          echo "CLIENT_APP_ID=$env:CLIENT_APP_ID" >> $env:GITHUB_ENV
-          echo "CLIENT_APP_SECRET=$env:CLIENT_APP_SECRET" >> $env:GITHUB_ENV
-          echo "REPOSITORY_API_AUDIENCE=$env:REPOSITORY_API_AUDIENCE" >> $env:GITHUB_ENV
-          echo "EVENT_INGEST_API_AUDIENCE=$env:EVENT_INGEST_API_AUDIENCE" >> $env:GITHUB_ENV
-          echo "MYSQL_CONNECTION_STRING=$env:MYSQL_CONNECTION_STRING" >> $env:GITHUB_ENV
-          echo "REPOSITORY_API_BASE_URL=$env:REPOSITORY_API_BASE_URL" >> $env:GITHUB_ENV
-          echo "EVENT_INGEST_API_BASE_URL=$env:EVENT_INGEST_API_BASE_URL" >> $env:GITHUB_ENV
+          Write-Output "::add-mask::$clientAppSecret"
+          Write-Output "::add-mask::$mysqlConnectionString"
+
+          echo "CLIENT_APP_ID=$($outputs.client_app_id.value)" >> $env:GITHUB_ENV
+          echo "CLIENT_APP_SECRET=$clientAppSecret" >> $env:GITHUB_ENV
+          echo "REPOSITORY_API_AUDIENCE=$($outputs.repository_api_audience.value)" >> $env:GITHUB_ENV
+          echo "EVENT_INGEST_API_AUDIENCE=$($outputs.event_ingest_api_audience.value)" >> $env:GITHUB_ENV
+          echo "MYSQL_CONNECTION_STRING=$mysqlConnectionString" >> $env:GITHUB_ENV
+          echo "REPOSITORY_API_BASE_URL=$($outputs.repository_api_base_url.value)" >> $env:GITHUB_ENV
+          echo "EVENT_INGEST_API_BASE_URL=$($outputs.event_ingest_api_base_url.value)" >> $env:GITHUB_ENV
         env:
           ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
